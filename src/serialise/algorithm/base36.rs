@@ -70,10 +70,10 @@ impl Base36 {
         result
     }
 
-    fn base36_to_bytes(base36: &str) -> Vec<u8> {
+    fn base36_to_bytes(base36: &str) -> Result<Vec<u8>, SerialiseError> {
         let s = base36.trim();
         if s.is_empty() || s == "0" {
-            return vec![0];
+            return Ok(vec![0]);
         }
 
         let mut acc = vec![0u8];
@@ -82,7 +82,7 @@ impl Base36 {
                 .iter()
                 .position(|&x| x == c.to_ascii_lowercase() as u8)
             else {
-                panic!("invalid base36 character");
+                return Err(SerialiseError::new("Invalid base36 character".to_string()));
             };
             let digit = u32::from(u8::try_from(digit_usize).unwrap_or_else(|_| unreachable!()));
 
@@ -106,17 +106,10 @@ impl Base36 {
             acc.remove(0);
         }
 
-        acc
+        Ok(acc)
     }
 
     /// Decodes a base36 string into bytes, optionally left-padding to `size`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `base36` contains a character outside the base36 alphabet.
-    ///
-    /// Panics if the decoded value requires more than `size` bytes when `size > 0`.
-    /// Decodes a base36 string into bytes.
     ///
     /// # Arguments
     /// * `base36` - The base36-encoded string to decode
@@ -126,25 +119,29 @@ impl Base36 {
     /// # Returns
     /// The decoded bytes
     ///
-    /// # Panics
-    /// * If `base36` contains characters outside the base36 alphabet
-    /// * If the decoded value requires more than `size` bytes when `size > 0`
+    /// # Errors
+    /// Returns `Err` if `base36` contains characters outside the base36 alphabet.
+    /// Returns `Err` if the decoded value requires more than `size` bytes when `size > 0`
     #[must_use = "This returns the decoded bytes and does nothing if unused"]
-    pub fn from_base36(base36: &str, size: usize) -> Vec<u8> {
-        let mut bytes = Self::base36_to_bytes(base36);
+    pub fn from_base36(base36: &str, size: usize) -> Result<Vec<u8>, SerialiseError> {
+        match Self::base36_to_bytes(base36) {
+            Err(e) => Err(e),
+            Ok(mut bytes) => {
+                if bytes.len() > size && size > 0 {
+                    return Err(SerialiseError::new(format!(
+                        "base36 value does not fit in {size} bytes"
+                    )));
+                }
 
-        assert!(
-            !(bytes.len() > size && size > 0),
-            "base36 value does not fit in {size} bytes"
-        );
+                if bytes.len() < size && size > 0 {
+                    let mut padded = vec![0u8; size - bytes.len()];
+                    padded.append(&mut bytes);
+                    return Ok(padded);
+                }
 
-        if bytes.len() < size && size > 0 {
-            let mut padded = vec![0u8; size - bytes.len()];
-            padded.append(&mut bytes);
-            return padded;
+                Ok(bytes)
+            }
         }
-
-        bytes
     }
 }
 
@@ -182,9 +179,25 @@ mod tests {
 
     #[test]
     fn test_from_base36() {
+        const NO_MATCH: &[u8] = b"no match";
         let string = "2dbg0rhouyms2hsh4jiluolq0rx1et8yty277nr9mwq20b47cwxc2id6";
         let bytes = Base36::from_base36(string, 0);
+        assert!(bytes.is_ok());
+        assert_eq!(
+            bytes.unwrap_or_else(|_| NO_MATCH.to_vec()),
+            b"0123456789abcdefghijklmnopqrstuvwxyz"
+        );
+    }
 
-        assert_eq!(bytes, b"0123456789abcdefghijklmnopqrstuvwxyz");
+    #[test]
+    fn test_from_invalid_base36() {
+        let string = "2dbg0rhouyms2hsh4jiluolq0rx!1et8yty277nr9mwq20b47cwxc2id6";
+        let bytes = Base36::from_base36(string, 0);
+        assert!(bytes.is_err());
+
+        assert_eq!(
+            bytes.unwrap_err().to_string(),
+            "Invalid base36 character".to_string()
+        );
     }
 }

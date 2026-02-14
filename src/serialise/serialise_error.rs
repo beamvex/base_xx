@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 /// Error type for serialization operations.
 ///
 /// This type represents errors that can occur during serialization and
@@ -22,5 +24,11 @@ impl SerialiseError {
     #[must_use = "This returns the error message string and does nothing if unused"]
     pub const fn get_message(&self) -> &String {
         &self.message
+    }
+}
+
+impl Display for SerialiseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.message)
     }
 }
