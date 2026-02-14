@@ -1,3 +1,5 @@
+//! Types and algorithms for encoding/decoding data.
+
 /// Serialization algorithms and implementations.
 pub mod algorithm;
 

@@ -1,8 +1,4 @@
-use crate::{
-    serialisable,
-    serialise::{SerialString, SerialiseError, SerialiseType},
-    string_serialisable,
-};
+use crate::serialise::{ByteVec, EncodedString, Encoding, SerialiseError};
 
 const ALPHABET: &[u8; 36] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 
@@ -13,7 +9,7 @@ const ALPHABET: &[u8; 36] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 #[derive(Debug)]
 pub struct Base36 {
     /// The base36-encoded string representation
-    serialised: SerialString,
+    serialised: EncodedString,
 }
 
 impl Base36 {
@@ -22,44 +18,14 @@ impl Base36 {
     /// # Arguments
     /// * `serialised` - The base36-encoded string
     #[must_use = "This creates a new Base36 instance but does nothing if unused"]
-    pub const fn new(serialised: SerialString) -> Self {
+    pub const fn new(serialised: EncodedString) -> Self {
         Self { serialised }
     }
 
     /// Returns the base36-encoded string.
     #[must_use = "This returns the encoded string but does nothing if unused"]
-    pub fn get_serialised(self) -> SerialString {
+    pub fn get_serialised(self) -> EncodedString {
         self.serialised
-    }
-
-    /// Attempts to convert this value into a base36-encoded string.
-    ///
-    /// # Returns
-    /// The base36-encoded string representation
-    ///
-    /// # Errors
-    /// Returns `SerialiseError` if the conversion fails
-    pub fn try_into_serialstring_base36(self) -> Result<SerialString, SerialiseError> {
-        Ok(self.serialised)
-    }
-
-    /// Attempts to create a `Base36` instance from a serialized string.
-    ///
-    /// # Arguments
-    /// * `serial_string` - The serialized string to parse
-    ///
-    /// # Returns
-    /// A new `Base36` instance
-    ///
-    /// # Errors
-    /// Returns `SerialiseError` if:
-    /// - The serialization type is not Base36
-    /// - The string cannot be decoded as base36
-    pub fn try_from_serial_string(serial_string: SerialString) -> Result<Self, SerialiseError> {
-        if serial_string.get_serialise_type() != SerialiseType::Base36 {
-            return Err(SerialiseError::new("Invalid SerialiseType".into()));
-        }
-        Ok(Self::new(serial_string))
     }
 
     /// Encodes a byte slice using base36 encoding.
@@ -177,115 +143,43 @@ impl Base36 {
     }
 }
 
-impl TryFrom<Base36> for Vec<u8> {
+impl TryFrom<ByteVec> for Base36 {
     type Error = SerialiseError;
-    fn try_from(value: Base36) -> Result<Self, Self::Error> {
-        Ok(Base36::from_base36(value.get_serialised().get_string(), 0))
-    }
-}
-
-impl TryFrom<Vec<u8>> for Base36 {
-    type Error = SerialiseError;
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        Ok(Self::new(SerialString::new(
-            SerialiseType::Base36,
-            Self::to_base36(&value),
+    fn try_from(value: ByteVec) -> Result<Self, Self::Error> {
+        Ok(Self::new(EncodedString::new(
+            Encoding::Base36,
+            Self::to_base36(&value.get_bytes()),
         )))
     }
 }
 
-serialisable!(Base36);
-string_serialisable!(Base36);
+impl TryFrom<Base36> for EncodedString {
+    type Error = SerialiseError;
+    fn try_from(value: Base36) -> Result<Self, Self::Error> {
+        Ok(value.get_serialised())
+    }
+}
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
-    use crate::serialise::Bytes;
-    use crate::serialise::SerialString;
-
-    use crate::serialise::StructType;
 
     #[test]
-    pub fn test_base36() {
-        let test = b"this is a really good test";
-        let test_bytes = Bytes::new(StructType::HASH, test.to_vec());
-        let test_bytes2 = test_bytes.clone();
-        let base36_result: Result<Base36, SerialiseError> = test_bytes.try_into();
-
-        if let Ok(base36) = base36_result {
-            slogger::debug!("base36 {base36:?}");
-
-            let serialised: Result<SerialString, SerialiseError> =
-                base36.try_into_serialstring_base36();
-            if let Ok(serialised) = serialised {
-                let serialised_str = serialised.get_string();
-                slogger::debug!("test_bytes_restored {serialised_str}");
-
-                let deserialised: Result<Base36, SerialiseError> =
-                    Base36::try_from_serial_string(serialised);
-                if let Ok(deserialised) = deserialised {
-                    let test_bytes_restored: Result<Bytes, SerialiseError> =
-                        deserialised.try_into();
-                    match test_bytes_restored {
-                        Err(e) => slogger::debug!("test_bytes_restored error {e:?}"),
-                        Ok(test_bytes_restored) => {
-                            assert_eq!(test, test_bytes_restored.get_bytes().as_slice());
-                        }
-                    }
-                }
-            }
-        }
-
-        let mut badvec: Vec<u8> = vec![];
-        badvec.push(99);
-        badvec.extend_from_slice(test_bytes2.get_bytes().as_slice());
-
-        let base36_str = Base36::to_base36(&badvec);
-        let base36 = Base36::new(SerialString::new(SerialiseType::Base36, base36_str));
-        slogger::debug!("base36 {base36:?}");
-
-        let serialised: Result<SerialString, SerialiseError> =
-            base36.try_into_serialstring_base36();
-        if let Ok(serialised) = serialised {
-            let serialised_str = serialised.get_string();
-            slogger::debug!("test_bytes_restored {serialised_str}");
-
-            let deserialised: Result<Base36, SerialiseError> =
-                Base36::try_from_serial_string(serialised);
-            if let Ok(deserialised) = deserialised {
-                let test_bytes_restored: Result<Bytes, SerialiseError> = deserialised.try_into();
-                assert!(test_bytes_restored.is_err());
-            }
-        }
+    fn test_to_base36() {
+        let string = b"0123456789abcdefghijklmnopqrstuvwxyz";
+        let base36 = Base36::to_base36(string);
+        assert_eq!(
+            base36,
+            "2dbg0rhouyms2hsh4jiluolq0rx1et8yty277nr9mwq20b47cwxc2id6"
+        );
     }
 
     #[test]
-    pub fn test_invalid_base36() {
-        let test = b"this is a failure test; its a little bit manufactured as this shouldnt be possible via code";
-        let test_bytes = test.to_vec();
-        let mut badvec: Vec<u8> = vec![];
-        badvec.push(99);
-        badvec.extend_from_slice(&test_bytes);
+    fn test_from_base36() {
+        let string = "2dbg0rhouyms2hsh4jiluolq0rx1et8yty277nr9mwq20b47cwxc2id6";
+        let bytes = Base36::from_base36(string, 0);
 
-        let base36: Base36 = Base36::new(SerialString::new(
-            SerialiseType::Base36,
-            Base36::to_base36(&badvec),
-        ));
-        slogger::debug!("base36 {base36:?}");
-
-        let serialised: Result<SerialString, SerialiseError> =
-            base36.try_into_serialstring_base36();
-        if let Ok(serialised) = serialised {
-            let serialised_str = serialised.get_string();
-            slogger::debug!("test_bytes_restored {serialised_str}");
-
-            let deserialised: Result<Base36, SerialiseError> =
-                Base36::try_from_serial_string(serialised);
-            if let Ok(deserialised) = deserialised {
-                let test_bytes_restored: Result<Bytes, SerialiseError> = deserialised.try_into();
-                assert!(test_bytes_restored.is_err());
-            }
-        }
+        assert_eq!(bytes, b"0123456789abcdefghijklmnopqrstuvwxyz");
     }
 }
