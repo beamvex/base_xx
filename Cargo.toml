@@ -1,13 +1,13 @@
 [package]
 name = "base_xx"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Base X encoding"
 license = "MIT"
-hompage = "https://github.com/beamvex/base_x"
+hompage = "https://github.com/beamvex/base_xx"
 authors = ["Robert Forster <robert.forster@beamvex.com>"]
-repository = "https://github.com/beamvex/base_x"
-documentation = "https://docs.rs/base_x"
+repository = "https://github.com/beamvex/base_xx"
+documentation = "https://docs.rs/base_xx"
 
 [lib]
 test = true
