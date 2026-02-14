@@ -51,12 +51,12 @@ impl Base36 {
 
             while i < n.len() {
                 let v = u32::from(n[i]) + (rem * 256);
-                n[i] = (v / 36) as u8;
+                n[i] = u8::try_from(v / 36).unwrap_or_else(|_| unreachable!());
                 rem = v % 36;
                 i += 1;
             }
 
-            out.push(rem as u8);
+            out.push(u8::try_from(rem).unwrap_or_else(|_| unreachable!()));
 
             while n.first().copied() == Some(0) {
                 n.remove(0);
@@ -76,32 +76,37 @@ impl Base36 {
             return vec![0];
         }
 
-        let mut bytes = Vec::new();
+        let mut acc = vec![0u8];
         for c in s.chars() {
-            let digit = ALPHABET
+            let Some(digit_usize) = ALPHABET
                 .iter()
                 .position(|&x| x == c.to_ascii_lowercase() as u8)
-                .expect("invalid base36 character");
-            bytes.push(digit as u8);
+            else {
+                panic!("invalid base36 character");
+            };
+            let digit = u32::from(u8::try_from(digit_usize).unwrap_or_else(|_| unreachable!()));
+
+            let mut carry = digit;
+            for b in acc.iter_mut().rev() {
+                let v = u32::from(*b) * 36 + carry;
+                *b = u8::try_from(v & 0xff).unwrap_or_else(|_| unreachable!());
+                carry = v >> 8;
+            }
+
+            while carry > 0 {
+                acc.insert(
+                    0,
+                    u8::try_from(carry & 0xff).unwrap_or_else(|_| unreachable!()),
+                );
+                carry >>= 8;
+            }
         }
 
-        let mut carry = 0;
-        for b in bytes.iter_mut().rev() {
-            let v = u32::from(*b) * 36 + carry;
-            *b = (v & 0xff) as u8;
-            carry = v >> 8;
+        while acc.len() > 1 && acc[0] == 0 {
+            acc.remove(0);
         }
 
-        while carry > 0 {
-            bytes.insert(0, (carry & 0xff) as u8);
-            carry >>= 8;
-        }
-
-        while bytes.len() > 1 && bytes[0] == 0 {
-            bytes.remove(0);
-        }
-
-        bytes
+        acc
     }
 
     /// Decodes a base36 string into bytes, optionally left-padding to `size`.
