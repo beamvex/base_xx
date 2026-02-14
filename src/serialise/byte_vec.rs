@@ -1,4 +1,4 @@
-use crate::serialise::{Base36, SerialString, SerialiseError, SerialiseType, StructType};
+use crate::serialise::{Base36, SerialString, SerialiseError, SerialiseType};
 
 /// Raw byte representation of serializable data.
 ///
@@ -6,28 +6,18 @@ use crate::serialise::{Base36, SerialString, SerialiseError, SerialiseType, Stru
 /// its type information. It serves as an intermediate format between the
 /// original data and its string representation.
 #[derive(Debug, Clone)]
-pub struct Bytes {
-    /// The type of structure these bytes represent
-    struct_type: StructType,
-    /// The raw byte data
+pub struct ByteVec {
     bytes: Vec<u8>,
 }
 
-impl Bytes {
-    /// Creates a new `Bytes` instance.
+impl ByteVec {
+    /// Creates a new `ByteVec` instance.
     ///
     /// # Arguments
-    /// * `struct_type` - The type of structure these bytes represent
     /// * `bytes` - The raw byte data
-    #[must_use = "This creates a new Bytes instance but does nothing if unused"]
-    pub const fn new(struct_type: StructType, bytes: Vec<u8>) -> Self {
-        Self { struct_type, bytes }
-    }
-
-    /// Returns the type of structure these bytes represent.
-    #[must_use = "This returns the structure type but does nothing if unused"]
-    pub const fn get_struct_type(&self) -> StructType {
-        self.struct_type
+    #[must_use = "This creates a new ByteVec instance but does nothing if unused"]
+    pub const fn new(bytes: Vec<u8>) -> Self {
+        Self { bytes }
     }
 
     /// Returns the raw byte data.
@@ -58,6 +48,7 @@ impl Bytes {
             _ => Err(SerialiseError::new("Inavlid SerialiseType".to_string())),
         }
     }
+
     /// Attempts to convert these bytes into a base36-encoded string.
     ///
     /// # Returns

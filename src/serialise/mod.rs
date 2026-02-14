@@ -1,14 +1,8 @@
 /// Serialization algorithms and implementations.
 pub mod algorithm;
 
-/// Trait for types that can be converted to bytes.
-pub mod as_bytes;
-
 /// Raw byte representation of serializable data.
-pub mod bytes;
-
-/// Trait for types that can be constructed from bytes.
-pub mod from_bytes;
+pub mod byte_vec;
 
 /// String representation of serialized data.
 pub mod serial_string;
@@ -19,21 +13,15 @@ pub mod serialise_error;
 /// Supported serialization formats.
 pub mod serialise_type;
 
-/// Types of serializable structures.
-pub mod struct_type;
-
 pub use algorithm::base36::Base36;
 //pub use algorithm::base58::Base58;
 //pub use algorithm::base64::Base64;
 //pub use algorithm::hex::Hex;
 //pub use algorithm::uuencode::Uuencode;
-pub use as_bytes::AsBytes;
-pub use bytes::Bytes;
-pub use from_bytes::FromBytes;
+pub use byte_vec::ByteVec;
 pub use serial_string::SerialString;
 pub use serialise_error::SerialiseError;
 pub use serialise_type::SerialiseType;
-pub use struct_type::StructType;
 
 /// Implements serialization traits for a type.
 ///
