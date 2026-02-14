@@ -3,7 +3,7 @@
 /// This enum represents the different formats that can be used to serialize
 /// data structures into string representations.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum SerialiseType {
+pub enum Encoding {
     /// Base36 encoding (0-9 and A-Z)
     Base36,
     /// Base58 encoding (Bitcoin-style, excluding similar-looking characters)

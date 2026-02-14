@@ -5,13 +5,13 @@ pub mod algorithm;
 pub mod byte_vec;
 
 /// String representation of serialized data.
-pub mod serial_string;
+pub mod encoded_string;
 
 /// Error type for serialization operations.
 pub mod serialise_error;
 
 /// Supported serialization formats.
-pub mod serialise_type;
+pub mod encoding;
 
 pub use algorithm::base36::Base36;
 //pub use algorithm::base58::Base58;
@@ -19,30 +19,6 @@ pub use algorithm::base36::Base36;
 //pub use algorithm::hex::Hex;
 //pub use algorithm::uuencode::Uuencode;
 pub use byte_vec::ByteVec;
-pub use serial_string::SerialString;
+pub use encoded_string::EncodedString;
+pub use encoding::Encoding;
 pub use serialise_error::SerialiseError;
-pub use serialise_type::SerialiseType;
-
-/// Implements serialization traits for a type.
-///
-/// This macro implements both `AsBytes` and `FromBytes` traits for a type,
-/// allowing it to be converted to and from bytes.
-#[macro_export]
-macro_rules! serialisable {
-    ($t:ty) => {
-        $crate::try_to_bytes!($t);
-        $crate::try_from_bytes!($t);
-    };
-}
-
-/// Implements string serialization traits for a type.
-///
-/// This macro implements the traits needed to convert a type to and from
-/// its string representation using various encoding formats.
-#[macro_export]
-macro_rules! string_serialisable {
-    ($t:ty) => {
-        $crate::try_to_serial_string!($t);
-        $crate::try_from_serial_string!($t);
-    };
-}
