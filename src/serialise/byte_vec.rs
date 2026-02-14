@@ -66,3 +66,21 @@ impl ByteVec {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_encoding_base36() {
+        let bytes = ByteVec::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec());
+        let encoded = bytes.try_encode(Encoding::Base36);
+        assert!(encoded.is_ok());
+        assert_eq!(
+            encoded
+                .unwrap_or_else(|_| EncodedString::new(Encoding::Base36, "no match".to_string()))
+                .get_string(),
+            "2dbg0rhouyms2hsh4jiluolq0rx1et8yty277nr9mwq20b47cwxc2id6"
+        );
+    }
+}
