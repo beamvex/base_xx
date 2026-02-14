@@ -1,27 +1,41 @@
-use crate::{
-    serialisable,
-    serialise::{SerialString, SerialiseError, SerialiseType},
-    string_serialisable,
-};
+use crate::serialise::{ByteVec, EncodedString, Encoding, SerialiseError};
 
 const ALPHABET: &[u8; 58] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
+/// Base58 encoding implementation (Bitcoin-style).
+///
+/// This type provides methods to encode and decode data using base58 encoding,
+/// which uses a URL- and filename-safe alphabet that omits visually ambiguous
+/// characters.
 #[derive(Debug)]
 pub struct Base58 {
-    serialised: SerialString,
+    /// The base58-encoded string representation
+    serialised: EncodedString,
 }
 
 impl Base58 {
+    /// Creates a new `Base58` instance.
+    ///
+    /// # Arguments
+    /// * `serialised` - The base58-encoded string
     #[must_use]
-    pub const fn new(serialised: SerialString) -> Self {
+    pub const fn new(serialised: EncodedString) -> Self {
         Self { serialised }
     }
 
+    /// Returns the base58-encoded string.
     #[must_use]
-    pub fn get_serialised(self) -> SerialString {
+    pub fn get_serialised(self) -> EncodedString {
         self.serialised
     }
 
+    /// Encodes a byte slice using base58 encoding.
+    ///
+    /// # Arguments
+    /// * `bytes` - The bytes to encode
+    ///
+    /// # Returns
+    /// The base58-encoded string
     #[must_use]
     #[allow(clippy::missing_panics_doc)]
     pub fn to_base58(bytes: &[u8]) -> String {
@@ -40,7 +54,8 @@ impl Base58 {
             let mut rem: u32 = 0;
             for b in &mut n {
                 let v = (rem << 8) | u32::from(*b);
-                *b = u8::try_from(v / 58).expect("base58 division quotient must fit in u8");
+                *b = u8::try_from(v / 58)
+                    .unwrap_or_else(|_| unreachable!("base58 division quotient must fit in u8"));
                 rem = v % 58;
             }
 
@@ -64,11 +79,13 @@ impl Base58 {
         let mut bytes: Vec<u8> = vec![0];
 
         for c in s.bytes() {
-            let digit = ALPHABET
-                .iter()
-                .position(|&b| b == c)
-                .map(|p| u32::try_from(p).expect("base58 digit index must fit in u32"))
-                .expect("invalid base58 character");
+            let digit = ALPHABET.iter().position(|&b| b == c).map_or_else(
+                || panic!("invalid base58 character"),
+                |p| {
+                    u32::try_from(p)
+                        .unwrap_or_else(|_| unreachable!("base58 digit index must fit in u32"))
+                },
+            );
 
             let mut carry = digit;
             for b in bytes.iter_mut().rev() {
@@ -90,7 +107,7 @@ impl Base58 {
         bytes
     }
 
-    /// Decodes a base36 string into bytes, optionally left-padding to `size`.
+    /// Decodes a base58 string into bytes, optionally left-padding to `size`.
     ///
     /// # Panics
     ///
@@ -116,68 +133,46 @@ impl Base58 {
     }
 }
 
-impl TryFrom<Base58> for Vec<u8> {
+impl TryFrom<ByteVec> for Base58 {
     type Error = SerialiseError;
-    fn try_from(value: Base58) -> Result<Self, Self::Error> {
-        Ok(Base58::from_base58(value.get_serialised().get_string(), 0))
-    }
-}
-
-impl TryFrom<Vec<u8>> for Base58 {
-    type Error = SerialiseError;
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        Ok(Self::new(SerialString::new(
-            SerialiseType::Base58,
-            Self::to_base58(&value),
+    fn try_from(value: ByteVec) -> Result<Self, Self::Error> {
+        Ok(Self::new(EncodedString::new(
+            Encoding::Base58,
+            Self::to_base58(&value.get_bytes()),
         )))
     }
 }
 
-serialisable!(Base58);
-string_serialisable!(Base58);
+impl TryFrom<Base58> for EncodedString {
+    type Error = SerialiseError;
+    fn try_from(value: Base58) -> Result<Self, Self::Error> {
+        Ok(value.get_serialised())
+    }
+}
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
-    use crate::serialise::Bytes;
-    use crate::serialise::SerialString;
-    use crate::serialise::SerialiseError;
-    use crate::serialise::StructType;
 
     #[test]
-    pub fn test_base58() {
-        let test = b"this is a really good test";
-        let test_bytes = Bytes::new(StructType::HASH, test.to_vec());
-        let base58: Base58 = test_bytes.try_into().unwrap();
-        crate::debug!("base58 {base58:?}");
-        let serialised: SerialString = base58.try_into().unwrap();
-        let serialised_str = serialised.get_string();
-        crate::debug!("test_bytes_restored {serialised_str}");
-        let deserialised: Base58 = serialised.try_into().unwrap();
-        let test_bytes_restored: Bytes = deserialised.try_into().unwrap();
-        assert_eq!(test, test_bytes_restored.get_bytes().as_slice());
+    fn test_to_base58() {
+        let string = b"0123456789abcdefghijklmnopqrstuvwxyz";
+        let base58 = Base58::to_base58(string);
+        assert_eq!(base58, "NE1FfXYqCHge2p4MZ56o8gdrDWMiHXPJLXk9ixxKgUebU7VqB",);
     }
 
     #[test]
-    pub fn test_invalid_base58() {
-        let test = b"this is a failure test; its a little bit manufactured as this shouldnt be possible via code";
-        let test_bytes = test.to_vec();
-        let mut badvec: Vec<u8> = vec![];
-        badvec.push(99);
-        badvec.extend_from_slice(&test_bytes);
+    fn test_from_base58() {
+        let string = "NE1FfXYqCHge2p4MZ56o8gdrDWMiHXPJLXk9ixxKgUebU7VqB";
+        let bytes = Base58::from_base58(string, 0);
+        assert_eq!(bytes, b"0123456789abcdefghijklmnopqrstuvwxyz");
+    }
 
-        let base58: Base58 = Base58::new(SerialString::new(
-            SerialiseType::Base58,
-            Base58::to_base58(&badvec),
-        ));
-        crate::debug!("base58 {base58:?}");
-
-        let serialised: SerialString = base58.try_into().unwrap();
-
-        let deserialised: Base58 = serialised.try_into().unwrap();
-        let test_bytes_restored: Result<Bytes, SerialiseError> = deserialised.try_into();
-
-        assert!(test_bytes_restored.is_err());
+    #[test]
+    #[should_panic(expected = "invalid base58 character")]
+    fn test_from_invalid_base58_panics() {
+        let string = "NE1FfXYqCHge2p4MZ56o8gdrDWMiH!XPJLXk9ixxKgUebU7VqB";
+        let _bytes = Base58::from_base58(string, 0);
     }
 }
