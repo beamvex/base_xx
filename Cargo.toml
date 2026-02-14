@@ -2,5 +2,14 @@
 name = "base_x"
 version = "0.1.0"
 edition = "2024"
+description = "Base X encoding"
+license = "MIT"
+hompage = "https://github.com/beamvex/base_x"
+authors = ["Robert Forster <robert.forster@beamvex.com>"]
+repository = "https://github.com/beamvex/base_x"
+documentation = "https://docs.rs/base_x"
+
+[lib]
+test = true
 
 [dependencies]
