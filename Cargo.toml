@@ -13,6 +13,8 @@ documentation = "https://docs.rs/base_xx"
 test = true
 
 [dependencies]
+slogger = "0.1.1"
+chrono = "0.4.34"
 
 [lints.clippy]
 unwrap_used = "deny"
