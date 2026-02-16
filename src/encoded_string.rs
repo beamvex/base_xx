@@ -80,7 +80,11 @@ impl std::fmt::Display for EncodedString {
 macro_rules! decodeable {
     ($t:ty) => {
         impl $t {
-            #[must_use]
+            /// Attempts to decode an encoded string into this type.
+            ///
+            /// # Errors
+            /// Returns `Err` if the underlying decoding fails.
+            #[must_use = "decoding returns a result that must be handled"]
             pub fn try_decode(encoded_string: EncodedString) -> Result<Self, SerialiseError> {
                 match encoded_string.encoding {
                     Encoding::Base36 => Self::try_decode_base36(encoded_string),
@@ -88,7 +92,11 @@ macro_rules! decodeable {
                 }
             }
 
-            #[must_use]
+            /// Attempts to decode a base36-encoded string into this type.
+            ///
+            /// # Errors
+            /// Returns `Err` if the underlying decoding fails.
+            #[must_use = "decoding returns a result that must be handled"]
             pub fn try_decode_base36(
                 encoded_string: EncodedString,
             ) -> Result<Self, SerialiseError> {
@@ -130,5 +138,36 @@ mod tests {
         if let Err(e) = decoded {
             assert_eq!(e.to_string(), "Invalid base36 character");
         }
+    }
+
+    #[test]
+    fn test_decoable_decode_base36() {
+        #[derive(Debug, PartialEq)]
+        struct TestType {
+            value: Vec<u8>,
+        }
+
+        impl TryFrom<ByteVec> for TestType {
+            type Error = SerialiseError;
+
+            fn try_from(value: ByteVec) -> Result<Self, Self::Error> {
+                Ok(Self {
+                    value: value.get_bytes(),
+                })
+            }
+        }
+
+        decodeable!(TestType);
+
+        let encoded = EncodedString::new(
+            Encoding::Base36,
+            "2dbg0rhouyms2hsh4jiluolq0rx1et8yty277nr9mwq20b47cwxc2id6".to_string(),
+        );
+        let decoded = TestType::try_decode(encoded);
+        assert!(decoded.is_ok());
+        assert_eq!(
+            decoded.unwrap_or_else(|_| TestType { value: vec![] }).value,
+            b"0123456789abcdefghijklmnopqrstuvwxyz"
+        );
     }
 }
