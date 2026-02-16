@@ -71,6 +71,36 @@ impl std::fmt::Display for EncodedString {
     }
 }
 
+/// Implements decoding helpers for a type that can be constructed from decoded bytes.
+///
+/// This macro adds `try_decode` and `try_decode_base36` associated functions to the
+/// given type, delegating to [`EncodedString`] and then converting via `TryFrom`.
+///
+#[macro_export]
+macro_rules! decodeable {
+    ($t:ty) => {
+        impl $t {
+            #[must_use]
+            pub fn try_decode(encoded_string: EncodedString) -> Result<Self, SerialiseError> {
+                match encoded_string.encoding {
+                    Encoding::Base36 => Self::try_decode_base36(encoded_string),
+                    _ => Err(SerialiseError::new("Unsupported encoding".to_string())),
+                }
+            }
+
+            #[must_use]
+            pub fn try_decode_base36(
+                encoded_string: EncodedString,
+            ) -> Result<Self, SerialiseError> {
+                match encoded_string.try_decode_base36() {
+                    Ok(bytes) => Self::try_from(bytes),
+                    Err(error) => Err(error),
+                }
+            }
+        }
+    };
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
