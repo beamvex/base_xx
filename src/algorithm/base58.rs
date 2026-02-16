@@ -1,4 +1,4 @@
-use crate::serialise::{ByteVec, EncodedString, Encoding, SerialiseError};
+use crate::{ByteVec, EncodedString, Encoding, SerialiseError};
 
 const ALPHABET: &[u8; 58] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 

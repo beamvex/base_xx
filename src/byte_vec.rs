@@ -1,4 +1,4 @@
-use crate::serialise::{Base36, EncodedString, Encoding, SerialiseError, algorithm::Base58};
+use crate::{Base36, EncodedString, Encoding, SerialiseError, algorithm::Base58};
 
 /// Raw byte representation of serializable data.
 ///
@@ -88,6 +88,52 @@ impl ByteVec {
     }
 }
 
+/// Implements encoding functionality for a type that can be converted to bytes.
+///
+/// This macro generates implementation for encoding methods that allow converting
+/// the implementing type into various string representations (e.g., Base36, Base58).
+///
+/// The macro will generate `try_encode` and `try_encode_base36` methods for the type.
+#[macro_export]
+macro_rules! encodable {
+    ($t:ty) => {
+        impl $t {
+            /// Encodes this hash using the specified `Encoding`.
+            ///
+            /// # Parameters
+            /// * `encoding` - The encoding to use when encoding this hash.
+            ///
+            /// # Returns
+            /// A `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs.
+            ///
+            /// # Errors
+            /// * `SerialiseError` - If the specified encoding is unsupported or an error occurs during serialisation.
+            #[must_use = "The result of this function is a `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs."]
+            pub fn try_encode(&self, encoding: Encoding) -> Result<EncodedString, SerialiseError> {
+                match encoding {
+                    Encoding::Base36 => self.try_encode_base36(),
+                    _ => Err(SerialiseError::new("Unsupported encoding".to_string())),
+                }
+            }
+
+            /// Encodes this hash as a Base36 string.
+            ///
+            /// # Returns
+            /// A `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs.
+            ///
+            /// # Errors
+            /// * `SerialiseError` - If an error occurs during serialisation
+            #[must_use = "The result of this function is a `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs."]
+            pub fn try_encode_base36(&self) -> Result<EncodedString, SerialiseError> {
+                match ByteVec::try_from(self) {
+                    Err(error) => Err(error),
+                    Ok(byte_vec) => byte_vec.try_encode(Encoding::Base36),
+                }
+            }
+        }
+    };
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -115,6 +161,36 @@ mod tests {
                 .unwrap_or_else(|_| EncodedString::new(Encoding::Base36, "no match".to_string()))
                 .get_string(),
             "NE1FfXYqCHge2p4MZ56o8gdrDWMiHXPJLXk9ixxKgUebU7VqB"
+        );
+    }
+
+    #[test]
+    fn test_encodable_encoding_base36() {
+        struct Test {
+            bytes: Vec<u8>,
+        }
+
+        impl TryFrom<&Test> for ByteVec {
+            type Error = SerialiseError;
+            fn try_from(value: &Test) -> Result<Self, SerialiseError> {
+                let result = Self::new(value.bytes.clone());
+                Ok(result)
+            }
+        }
+
+        encodable!(Test);
+
+        let test = Test {
+            bytes: b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec(),
+        };
+
+        let encoded = test.try_encode(Encoding::Base36);
+        assert!(encoded.is_ok());
+        assert_eq!(
+            encoded
+                .unwrap_or_else(|_| EncodedString::new(Encoding::Base36, "no match".to_string()))
+                .get_string(),
+            "2dbg0rhouyms2hsh4jiluolq0rx1et8yty277nr9mwq20b47cwxc2id6"
         );
     }
 }

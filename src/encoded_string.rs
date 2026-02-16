@@ -1,4 +1,4 @@
-use crate::serialise::{Base36, ByteVec, Encoding, SerialiseError};
+use crate::{Base36, ByteVec, Encoding, SerialiseError};
 
 /// String representation of serialized data.
 ///
