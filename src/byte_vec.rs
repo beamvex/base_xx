@@ -98,10 +98,10 @@ impl ByteVec {
 macro_rules! encodable {
     ($t:ty) => {
         impl $t {
-            /// Encodes this hash using the specified `Encoding`.
+            /// Encodes this type using the specified `Encoding`.
             ///
             /// # Parameters
-            /// * `encoding` - The encoding to use when encoding this hash.
+            /// * `encoding` - The encoding to use when encoding this type.
             ///
             /// # Returns
             /// A `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs.
@@ -112,11 +112,12 @@ macro_rules! encodable {
             pub fn try_encode(&self, encoding: Encoding) -> Result<EncodedString, SerialiseError> {
                 match encoding {
                     Encoding::Base36 => self.try_encode_base36(),
+                    Encoding::Base58 => self.try_encode_base58(),
                     _ => Err(SerialiseError::new("Unsupported encoding".to_string())),
                 }
             }
 
-            /// Encodes this hash as a Base36 string.
+            /// Encodes this type as a Base36 string.
             ///
             /// # Returns
             /// A `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs.
@@ -128,6 +129,21 @@ macro_rules! encodable {
                 match ByteVec::try_from(self) {
                     Err(error) => Err(error),
                     Ok(byte_vec) => byte_vec.try_encode(Encoding::Base36),
+                }
+            }
+
+            /// Encodes this type as a Base58 string.
+            ///
+            /// # Returns
+            /// A `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs.
+            ///
+            /// # Errors
+            /// * `SerialiseError` - If an error occurs during serialisation
+            #[must_use = "The result of this function is a `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs."]
+            pub fn try_encode_base58(&self) -> Result<EncodedString, SerialiseError> {
+                match ByteVec::try_from(self) {
+                    Err(error) => Err(error),
+                    Ok(byte_vec) => byte_vec.try_encode(Encoding::Base58),
                 }
             }
         }
