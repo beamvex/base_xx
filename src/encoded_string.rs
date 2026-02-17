@@ -77,7 +77,7 @@ impl std::fmt::Display for EncodedString {
 /// given type, delegating to [`EncodedString`] and then converting via `TryFrom`.
 ///
 #[macro_export]
-macro_rules! decodeable {
+macro_rules! decodable {
     ($t:ty) => {
         impl $t {
             /// Attempts to decode an encoded string into this type.
@@ -157,7 +157,7 @@ mod tests {
             }
         }
 
-        decodeable!(TestType);
+        decodable!(TestType);
 
         let encoded = EncodedString::new(
             Encoding::Base36,
