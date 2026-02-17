@@ -152,7 +152,7 @@ mod tests {
 
             fn try_from(value: ByteVec) -> Result<Self, Self::Error> {
                 Ok(Self {
-                    value: value.get_bytes(),
+                    value: value.get_bytes().to_vec(),
                 })
             }
         }

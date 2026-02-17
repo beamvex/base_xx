@@ -5,7 +5,7 @@ use crate::{Base36, EncodedString, Encoding, SerialiseError, algorithm::Base58};
 /// This type represents the raw bytes of a serializable structure along with
 /// its type information. It serves as an intermediate format between the
 /// original data and its string representation.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ByteVec {
     bytes: Vec<u8>,
 }
@@ -22,8 +22,8 @@ impl ByteVec {
 
     /// Returns the raw byte data.
     #[must_use = "This returns the byte data but does nothing if unused"]
-    pub fn get_bytes(self) -> Vec<u8> {
-        self.bytes
+    pub fn get_bytes(&self) -> &[u8] {
+        &self.bytes
     }
 
     /// Attempts to convert these bytes into a string representation.
