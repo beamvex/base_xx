@@ -86,7 +86,7 @@ macro_rules! decodable {
             /// Returns `Err` if the underlying decoding fails.
             #[must_use = "decoding returns a result that must be handled"]
             pub fn try_decode(encoded_string: EncodedString) -> Result<Self, SerialiseError> {
-                match encoded_string.encoding {
+                match encoded_string.get_encoding() {
                     Encoding::Base36 => Self::try_decode_base36(encoded_string),
                     _ => Err(SerialiseError::new("Unsupported encoding".to_string())),
                 }
