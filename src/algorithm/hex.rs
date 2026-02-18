@@ -1,24 +1,20 @@
-use crate::{
-    serialisable,
-    serialise::{SerialString, SerialiseError, SerialiseType},
-    string_serialisable,
-};
+use crate::{EncodedString, Encoding, SerialiseError};
 
 const ALPHABET: &[u8; 16] = b"0123456789abcdef";
 
 #[derive(Debug)]
 pub struct Hex {
-    serialised: SerialString,
+    serialised: EncodedString,
 }
 
 impl Hex {
     #[must_use]
-    pub const fn new(serialised: SerialString) -> Self {
+    pub const fn new(serialised: EncodedString) -> Self {
         Self { serialised }
     }
 
     #[must_use]
-    pub fn get_serialised(self) -> SerialString {
+    pub fn get_serialised(self) -> EncodedString {
         self.serialised
     }
 
@@ -83,55 +79,36 @@ impl TryFrom<Hex> for Vec<u8> {
 impl TryFrom<Vec<u8>> for Hex {
     type Error = SerialiseError;
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        Ok(Self::new(SerialString::new(
-            SerialiseType::Hex,
+        Ok(Self::new(EncodedString::new(
+            Encoding::Hex,
             Self::to_hex(&value),
         )))
     }
 }
 
-serialisable!(Hex);
-string_serialisable!(Hex);
-
 #[cfg(test)]
 mod tests {
 
     use super::*;
-    use crate::serialise::Bytes;
-    use crate::serialise::SerialString;
-    use crate::serialise::SerialiseError;
-    use crate::serialise::StructType;
 
     #[test]
-    pub fn test_hex() {
-        let test = b"this is a really good test";
-        let test_bytes = Bytes::new(StructType::HASH, test.to_vec());
-        let hex: Hex = test_bytes.try_into().unwrap();
-        crate::debug!("hex {hex:?}");
-        let serialised: SerialString = hex.try_into().unwrap();
-        let serialised_str = serialised.get_string();
-        crate::debug!("test_bytes_restored {serialised_str}");
-        let deserialised: Hex = serialised.try_into().unwrap();
-        let test_bytes_restored: Bytes = deserialised.try_into().unwrap();
-        assert_eq!(test, test_bytes_restored.get_bytes().as_slice());
+    fn test_to_base64() {
+        let string = b"0123456789abcdefghijklmnopqrstuvwxyz";
+        let base64 = Base64::to_base64(string);
+        assert_eq!(base64, "MDEyMzQ1Njc4OWFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6");
     }
 
     #[test]
-    pub fn test_invalid_hex() {
-        let test = b"this is a failure test; its a little bit manufactured as this shouldnt be possible via code";
-        let test_bytes = test.to_vec();
-        let mut badvec: Vec<u8> = vec![];
-        badvec.push(99);
-        badvec.extend_from_slice(&test_bytes);
+    fn test_from_base64() {
+        let string = "MDEyMzQ1Njc4OWFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6";
+        let bytes = Base64::from_base64(string, 0);
+        assert_eq!(bytes, b"0123456789abcdefghijklmnopqrstuvwxyz");
+    }
 
-        let hex: Hex = Hex::new(SerialString::new(SerialiseType::Hex, Hex::to_hex(&badvec)));
-        crate::debug!("hex {hex:?}");
-
-        let serialised: SerialString = hex.try_into().unwrap();
-
-        let deserialised: Hex = serialised.try_into().unwrap();
-        let test_bytes_restored: Result<Bytes, SerialiseError> = deserialised.try_into();
-
-        assert!(test_bytes_restored.is_err());
+    #[test]
+    #[should_panic(expected = "invalid base64 character")]
+    fn test_from_invalid_base64_panics() {
+        let string = "NE1FfXYqCHge2p4MZ56o8gdrDWMiH!XPJLXk9ixxKgUebU7VqB";
+        let _bytes = Base64::from_base64(string, 0);
     }
 }

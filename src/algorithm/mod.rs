@@ -7,8 +7,8 @@ pub mod base58;
 /// Base64 encoding implementation (RFC 4648).
 pub mod base64;
 
-// Hexadecimal encoding implementation (0-9 and A-F).
-//pub mod hex;
+/// Hexadecimal encoding implementation (0-9 and A-F).
+pub mod hex;
 
 // UUEncoding implementation.
 //pub mod uuencode;
