@@ -93,9 +93,9 @@ impl ByteVec {
 /// This trait generates implementation for encoding methods that allow converting
 /// the implementing type into various string representations (e.g., Base36, Base58).
 ///
-pub trait Encodable<T>
+pub trait Encodable
 where
-    for<'a> ByteVec: TryFrom<&'a T, Error = SerialiseError>,
+    for<'a> ByteVec: TryFrom<&'a Self, Error = SerialiseError>,
 {
     /// Encodes this type using the specified `Encoding`.
     ///
@@ -109,10 +109,10 @@ where
     /// # Errors
     /// * `SerialiseError` - If the specified encoding is unsupported or an error occurs during serialisation.
     #[must_use = "The result of this function is a `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs."]
-    fn try_encode(value: &T, encoding: Encoding) -> Result<EncodedString, SerialiseError> {
+    fn try_encode(&self, encoding: Encoding) -> Result<EncodedString, SerialiseError> {
         match encoding {
-            Encoding::Base36 => Self::try_encode_base36(value),
-            Encoding::Base58 => Self::try_encode_base58(value),
+            Encoding::Base36 => Self::try_encode_base36(self),
+            Encoding::Base58 => Self::try_encode_base58(self),
             _ => Err(SerialiseError::new("Unsupported encoding".to_string())),
         }
     }
@@ -125,8 +125,8 @@ where
     /// # Errors
     /// * `SerialiseError` - If an error occurs during serialisation
     #[must_use = "The result of this function is a `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs."]
-    fn try_encode_base36(value: &T) -> Result<EncodedString, SerialiseError> {
-        match ByteVec::try_from(value) {
+    fn try_encode_base36(&self) -> Result<EncodedString, SerialiseError> {
+        match ByteVec::try_from(self) {
             Err(error) => Err(error),
             Ok(byte_vec) => byte_vec.try_encode(Encoding::Base36),
         }
@@ -140,8 +140,8 @@ where
     /// # Errors
     /// * `SerialiseError` - If an error occurs during serialisation
     #[must_use = "The result of this function is a `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs."]
-    fn try_encode_base58(value: &T) -> Result<EncodedString, SerialiseError> {
-        match ByteVec::try_from(value) {
+    fn try_encode_base58(&self) -> Result<EncodedString, SerialiseError> {
+        match ByteVec::try_from(self) {
             Err(error) => Err(error),
             Ok(byte_vec) => byte_vec.try_encode(Encoding::Base58),
         }
@@ -191,13 +191,13 @@ mod tests {
             }
         }
 
-        impl Encodable<Self> for Test {}
+        impl Encodable for Test {}
 
         let test = Test {
             bytes: b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec(),
         };
 
-        let encoded = <Test as Encodable<Test>>::try_encode(&test, Encoding::Base36);
+        let encoded = test.try_encode(Encoding::Base36);
         assert!(encoded.is_ok());
         assert_eq!(
             encoded

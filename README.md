@@ -21,7 +21,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-base_xx = "0.4.1"
+base_xx = "0.5.0"
 ```
 
 ## Usage
@@ -32,7 +32,7 @@ base_xx = "0.4.1"
 use base_xx::{ByteVec, Encoding};
 
 let bytes = ByteVec::new(b"Hello, world!".to_vec());
-let base36 = bytes.try_encode(Encoding::Base36)?;
+let base36 = bytes.clone().try_encode(Encoding::Base36)?;
 let base58 = bytes.try_encode(Encoding::Base58)?;
 
 println!("Base36: {}", base36);
@@ -42,7 +42,7 @@ println!("Base58: {}", base58);
 ### Implementing for Custom Types
 
 ```rust
-use base_xx::{ByteVec, Encodable, SerialiseError};
+use base_xx::{ByteVec, Encodable, Encoding, SerialiseError};
 
 struct MyType {
     data: Vec<u8>,
@@ -56,17 +56,17 @@ impl TryFrom<&MyType> for ByteVec {
     }
 }
 
-impl Encodable<Self> for MyType {}
+impl Encodable for MyType {}
 
 // Now you can encode MyType
 let my_data = MyType { data: vec![1, 2, 3] };
-let encoded = MyType::try_encode(&my_data, Encoding::Base36)?;
+let encoded = my_data.try_encode(Encoding::Base36)?;
 ```
 
 ### Decoding
 
 ```rust
-use base_xx::{ByteVec, Decodable, EncodedString, Encoding};
+use base_xx::{ByteVec, Decodable, EncodedString, Encoding, SerialiseError};
 
 // Implement TryFrom<ByteVec> for your type
 impl TryFrom<ByteVec> for MyType {
