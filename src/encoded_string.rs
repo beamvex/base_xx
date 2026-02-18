@@ -76,37 +76,39 @@ impl std::fmt::Display for EncodedString {
 /// This macro adds `try_decode` and `try_decode_base36` associated functions to the
 /// given type, delegating to [`EncodedString`] and then converting via `TryFrom`.
 ///
-#[macro_export]
-macro_rules! decodable {
-    ($t:ty) => {
-        impl $t {
-            /// Attempts to decode an encoded string into this type.
-            ///
-            /// # Errors
-            /// Returns `Err` if the underlying decoding fails.
-            #[must_use = "decoding returns a result that must be handled"]
-            pub fn try_decode(encoded_string: EncodedString) -> Result<Self, SerialiseError> {
-                match encoded_string.get_encoding() {
-                    Encoding::Base36 => Self::try_decode_base36(encoded_string),
-                    _ => Err(SerialiseError::new("Unsupported encoding".to_string())),
-                }
-            }
-
-            /// Attempts to decode a base36-encoded string into this type.
-            ///
-            /// # Errors
-            /// Returns `Err` if the underlying decoding fails.
-            #[must_use = "decoding returns a result that must be handled"]
-            pub fn try_decode_base36(
-                encoded_string: EncodedString,
-            ) -> Result<Self, SerialiseError> {
-                match encoded_string.try_decode_base36() {
-                    Ok(bytes) => Self::try_from(bytes),
-                    Err(error) => Err(error),
-                }
-            }
+pub trait Decodable
+where
+    Self: TryFrom<ByteVec, Error = SerialiseError>,
+{
+    /// Attempts to decode an encoded string into this type.
+    ///
+    /// # Errors
+    /// Returns `Err` if the underlying decoding fails.
+    #[must_use = "decoding returns a result that must be handled"]
+    fn try_decode(encoded_string: EncodedString) -> Result<Self, SerialiseError>
+    where
+        Self: Sized,
+    {
+        match encoded_string.get_encoding() {
+            Encoding::Base36 => Self::try_decode_base36(encoded_string),
+            _ => Err(SerialiseError::new("Unsupported encoding".to_string())),
         }
-    };
+    }
+
+    /// Attempts to decode a base36-encoded string into this type.
+    ///
+    /// # Errors
+    /// Returns `Err` if the underlying decoding fails.
+    #[must_use = "decoding returns a result that must be handled"]
+    fn try_decode_base36(encoded_string: EncodedString) -> Result<Self, SerialiseError>
+    where
+        Self: Sized,
+    {
+        match encoded_string.try_decode_base36() {
+            Ok(bytes) => Self::try_from(bytes),
+            Err(error) => Err(error),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -157,7 +159,7 @@ mod tests {
             }
         }
 
-        decodable!(TestType);
+        impl Decodable for TestType {}
 
         let encoded = EncodedString::new(
             Encoding::Base36,

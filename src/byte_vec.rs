@@ -191,18 +191,7 @@ mod tests {
             }
         }
 
-        impl Encodable<Self> for Test {
-            fn try_encode(
-                value: &Self,
-                encoding: Encoding,
-            ) -> Result<EncodedString, SerialiseError> {
-                match encoding {
-                    Encoding::Base36 => Self::try_encode_base36(value),
-                    Encoding::Base58 => Self::try_encode_base58(value),
-                    _ => Err(SerialiseError::new("Unsupported encoding".to_string())),
-                }
-            }
-        }
+        impl Encodable<Self> for Test {}
 
         let test = Test {
             bytes: b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec(),
