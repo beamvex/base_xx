@@ -70,7 +70,18 @@ impl Base58 {
         out.into_iter().map(char::from).collect()
     }
 
-    fn base58_to_bytes(base58: &str) -> Vec<u8> {
+    /// Converts a base58 string into its byte representation.
+    ///
+    /// # Arguments
+    /// * `base58` - The base58-encoded string to convert
+    ///
+    /// # Returns
+    /// The decoded bytes
+    ///
+    /// # Panics
+    /// Panics if the input contains characters outside the base58 alphabet
+    #[must_use = "This returns the decoded bytes but does nothing if unused"]
+    pub fn base58_to_bytes(base58: &str) -> Vec<u8> {
         let s = base58.trim();
         if s.is_empty() || s == "0" {
             return vec![0];
@@ -79,7 +90,7 @@ impl Base58 {
         let mut bytes: Vec<u8> = vec![0];
 
         for c in s.bytes() {
-            let digit = ALPHABET.iter().position(|&b| b == c).map_or_else(
+            let digit = ALPHABET.iter().position(|b| *b == c).map_or_else(
                 || panic!("invalid base58 character"),
                 |p| {
                     u32::try_from(p)
@@ -138,7 +149,7 @@ impl TryFrom<ByteVec> for Base58 {
     fn try_from(value: ByteVec) -> Result<Self, Self::Error> {
         Ok(Self::new(EncodedString::new(
             Encoding::Base58,
-            Self::to_base58(&value.get_bytes()),
+            Self::to_base58(value.get_bytes()),
         )))
     }
 }

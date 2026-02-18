@@ -64,13 +64,23 @@ impl Base36 {
         }
 
         let mut result = String::with_capacity(out.len());
-        for &byte in out.iter().rev() {
-            result.push(ALPHABET[byte as usize] as char);
+        for byte in out.iter().rev() {
+            result.push(ALPHABET[*byte as usize] as char);
         }
         result
     }
 
-    fn base36_to_bytes(base36: &str) -> Result<Vec<u8>, SerialiseError> {
+    /// Converts a base36 string into its byte representation.
+    ///
+    /// # Arguments
+    /// * `base36` - The base36-encoded string to convert
+    ///
+    /// # Returns
+    /// The decoded bytes
+    ///
+    /// # Errors
+    /// Returns `SerialiseError` if the input contains invalid base36 characters
+    pub fn base36_to_bytes(base36: &str) -> Result<Vec<u8>, SerialiseError> {
         let s = base36.trim();
         if s.is_empty() || s == "0" {
             return Ok(vec![0]);
@@ -80,7 +90,7 @@ impl Base36 {
         for c in s.chars() {
             let Some(digit_usize) = ALPHABET
                 .iter()
-                .position(|&x| x == c.to_ascii_lowercase() as u8)
+                .position(|x| *x == c.to_ascii_lowercase() as u8)
             else {
                 return Err(SerialiseError::new("Invalid base36 character".to_string()));
             };
@@ -150,7 +160,7 @@ impl TryFrom<ByteVec> for Base36 {
     fn try_from(value: ByteVec) -> Result<Self, Self::Error> {
         Ok(Self::new(EncodedString::new(
             Encoding::Base36,
-            Self::to_base36(&value.get_bytes()),
+            Self::to_base36(value.get_bytes()),
         )))
     }
 }
