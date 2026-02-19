@@ -22,8 +22,11 @@ impl Hex {
     }
 
     /// Convert bytes to a lowercase hex string.
-    #[must_use]
-    pub fn to_hex(bytes: &[u8]) -> String {
+    ///
+    /// # Errors
+    ///
+    /// This function never returns an error.
+    pub fn try_to_hex(bytes: &[u8]) -> Result<String, SerialiseError> {
         let mut out: Vec<u8> = Vec::with_capacity(bytes.len() * 2);
         for &b in bytes {
             out.push(ALPHABET[(b >> 4) as usize]);
@@ -31,7 +34,7 @@ impl Hex {
         }
 
         // `out` is guaranteed to be ASCII.
-        unsafe { String::from_utf8_unchecked(out) }
+        unsafe { Ok(String::from_utf8_unchecked(out)) }
     }
 
     const fn from_hex_digit(c: u8) -> Option<u8> {
@@ -45,42 +48,42 @@ impl Hex {
 
     /// Decodes a hex string into bytes.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Panics if `hex` contains a non-hex character.
+    /// Returns an error if `hex` contains a non-hex character.
     ///
-    /// Panics if `hex` contains an odd number of characters.
-    #[must_use]
-    pub fn from_hex(hex: &str) -> Vec<u8> {
+    /// Returns an error if `hex` contains an odd number of characters.
+    pub fn try_from_hex(hex: &str) -> Result<Vec<u8>, SerialiseError> {
         let s = hex.trim();
         if s.is_empty() {
-            return vec![];
+            return Ok(vec![]);
         }
 
-        assert!(
-            s.len().is_multiple_of(2),
-            "hex string must have an even length"
-        );
+        if !s.len().is_multiple_of(2) {
+            return Err(SerialiseError::new(
+                "hex string must have an even length".to_string(),
+            ));
+        }
 
         let mut out: Vec<u8> = Vec::with_capacity(s.len() / 2);
         let bytes = s.as_bytes();
         for i in (0..bytes.len()).step_by(2) {
             let Some(hi) = Self::from_hex_digit(bytes[i]) else {
-                panic!("invalid hex character");
+                return Err(SerialiseError::new("invalid hex character".to_string()));
             };
             let Some(lo) = Self::from_hex_digit(bytes[i + 1]) else {
-                panic!("invalid hex character");
+                return Err(SerialiseError::new("invalid hex character".to_string()));
             };
             out.push((hi << 4) | lo);
         }
-        out
+        Ok(out)
     }
 }
 
 impl TryFrom<Hex> for Vec<u8> {
     type Error = SerialiseError;
     fn try_from(value: Hex) -> Result<Self, Self::Error> {
-        Ok(Hex::from_hex(value.get_serialised().get_string()))
+        Hex::try_from_hex(value.get_serialised().get_string())
     }
 }
 
@@ -89,7 +92,7 @@ impl TryFrom<Vec<u8>> for Hex {
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
         Ok(Self::new(EncodedString::new(
             Encoding::Hex,
-            Self::to_hex(&value),
+            Self::try_to_hex(&value)?,
         )))
     }
 }
@@ -102,7 +105,7 @@ mod tests {
     #[test]
     fn test_to_hex() {
         let bytes = b"0123456789abcdefghijklmnopqrstuvwxyz";
-        let hex = Hex::to_hex(bytes);
+        let hex = Hex::try_to_hex(bytes).unwrap_or_else(|_| String::new());
         assert_eq!(
             hex,
             "303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a"
@@ -112,14 +115,15 @@ mod tests {
     #[test]
     fn test_from_hex() {
         let string = "303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a";
-        let bytes = Hex::from_hex(string);
-        assert_eq!(bytes, b"0123456789abcdefghijklmnopqrstuvwxyz");
+        assert!(matches!(
+            Hex::try_from_hex(string),
+            Ok(bytes) if bytes == b"0123456789abcdefghijklmnopqrstuvwxyz"
+        ));
     }
 
     #[test]
-    #[should_panic(expected = "invalid hex character")]
-    fn test_from_invalid_hex_panics() {
+    fn test_from_invalid_hex_is_err() {
         let string = "gg";
-        let _bytes = Hex::from_hex(string);
+        assert!(Hex::try_from_hex(string).is_err());
     }
 }
