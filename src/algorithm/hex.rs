@@ -2,22 +2,26 @@ use crate::{EncodedString, Encoding, SerialiseError};
 
 const ALPHABET: &[u8; 16] = b"0123456789abcdef";
 
+/// Hex (base16) encoding implementation (RFC 4648).
 #[derive(Debug)]
 pub struct Hex {
     serialised: EncodedString,
 }
 
 impl Hex {
+    /// Create a new Hex instance.
     #[must_use]
     pub const fn new(serialised: EncodedString) -> Self {
         Self { serialised }
     }
 
+    /// Get the serialised data.
     #[must_use]
     pub fn get_serialised(self) -> EncodedString {
         self.serialised
     }
 
+    /// Convert bytes to a lowercase hex string.
     #[must_use]
     pub fn to_hex(bytes: &[u8]) -> String {
         let mut out: Vec<u8> = Vec::with_capacity(bytes.len() * 2);
@@ -61,8 +65,12 @@ impl Hex {
         let mut out: Vec<u8> = Vec::with_capacity(s.len() / 2);
         let bytes = s.as_bytes();
         for i in (0..bytes.len()).step_by(2) {
-            let hi = Self::from_hex_digit(bytes[i]).expect("invalid hex character");
-            let lo = Self::from_hex_digit(bytes[i + 1]).expect("invalid hex character");
+            let Some(hi) = Self::from_hex_digit(bytes[i]) else {
+                panic!("invalid hex character");
+            };
+            let Some(lo) = Self::from_hex_digit(bytes[i + 1]) else {
+                panic!("invalid hex character");
+            };
             out.push((hi << 4) | lo);
         }
         out
@@ -92,23 +100,26 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_to_base64() {
-        let string = b"0123456789abcdefghijklmnopqrstuvwxyz";
-        let base64 = Base64::to_base64(string);
-        assert_eq!(base64, "MDEyMzQ1Njc4OWFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6");
+    fn test_to_hex() {
+        let bytes = b"0123456789abcdefghijklmnopqrstuvwxyz";
+        let hex = Hex::to_hex(bytes);
+        assert_eq!(
+            hex,
+            "303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a"
+        );
     }
 
     #[test]
-    fn test_from_base64() {
-        let string = "MDEyMzQ1Njc4OWFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6";
-        let bytes = Base64::from_base64(string, 0);
+    fn test_from_hex() {
+        let string = "303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a";
+        let bytes = Hex::from_hex(string);
         assert_eq!(bytes, b"0123456789abcdefghijklmnopqrstuvwxyz");
     }
 
     #[test]
-    #[should_panic(expected = "invalid base64 character")]
-    fn test_from_invalid_base64_panics() {
-        let string = "NE1FfXYqCHge2p4MZ56o8gdrDWMiH!XPJLXk9ixxKgUebU7VqB";
-        let _bytes = Base64::from_base64(string, 0);
+    #[should_panic(expected = "invalid hex character")]
+    fn test_from_invalid_hex_panics() {
+        let string = "gg";
+        let _bytes = Hex::from_hex(string);
     }
 }
