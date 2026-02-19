@@ -22,15 +22,17 @@ impl Base64 {
     }
 
     /// Convert bytes to base64 string.
-    #[must_use]
-    #[allow(clippy::missing_panics_doc)]
-    pub fn to_base64(bytes: &[u8]) -> String {
+    ///
+    /// # Errors
+    ///
+    /// This function currently does not return an error.
+    pub fn try_to_base64(bytes: &[u8]) -> Result<String, SerialiseError> {
         if bytes.is_empty() {
-            return "0".to_string();
+            return Ok("0".to_string());
         }
 
         if bytes.iter().all(|&b| b == 0) {
-            return "0".to_string();
+            return Ok("0".to_string());
         }
 
         let mut n = bytes.to_vec();
@@ -52,22 +54,22 @@ impl Base64 {
         }
 
         out.reverse();
-        out.into_iter().map(char::from).collect()
+        Ok(out.into_iter().map(char::from).collect())
     }
 
-    fn base64_to_bytes(base64: &str) -> Vec<u8> {
+    fn base64_to_bytes(base64: &str) -> Result<Vec<u8>, SerialiseError> {
         let s = base64.trim();
         if s.is_empty() || s == "0" {
-            return vec![0];
+            return Ok(vec![0]);
         }
 
         let mut bytes: Vec<u8> = vec![0];
 
         for c in s.bytes() {
-            let digit = ALPHABET.iter().position(|&b| b == c).map_or_else(
-                || panic!("invalid base64 character"),
-                |p| u32::try_from(p).unwrap_or_else(|_| unreachable!()),
-            );
+            let Some(pos) = ALPHABET.iter().position(|&b| b == c) else {
+                return Err(SerialiseError::new("invalid base64 character".to_string()));
+            };
+            let digit = u32::try_from(pos).unwrap_or_else(|_| unreachable!());
 
             let mut carry = digit;
             for b in bytes.iter_mut().rev() {
@@ -86,39 +88,40 @@ impl Base64 {
             bytes.remove(0);
         }
 
-        bytes
+        Ok(bytes)
     }
 
     /// Decodes a base64 string into bytes, optionally left-padding to `size`.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Panics if `base64` contains a character outside the base64 alphabet.
+    /// Returns `Err` if `base64` contains characters outside the base64 alphabet.
     ///
-    /// Panics if the decoded value requires more than `size` bytes when `size > 0`.
-    #[must_use]
-    pub fn from_base64(base64: &str, size: usize) -> Vec<u8> {
-        let mut bytes = Self::base64_to_bytes(base64);
+    /// Returns `Err` if the decoded value requires more than `size` bytes when `size > 0`.
+    ///
+    pub fn try_from_base64(base64: &str, size: usize) -> Result<Vec<u8>, SerialiseError> {
+        let mut bytes = Self::base64_to_bytes(base64)?;
 
-        assert!(
-            !(bytes.len() > size && size > 0),
-            "base64 value does not fit in {size} bytes"
-        );
+        if bytes.len() > size && size > 0 {
+            return Err(SerialiseError::new(format!(
+                "base64 value does not fit in {size} bytes"
+            )));
+        }
 
         if bytes.len() < size && size > 0 {
             let mut padded = vec![0u8; size - bytes.len()];
             padded.append(&mut bytes);
-            return padded;
+            return Ok(padded);
         }
 
-        bytes
+        Ok(bytes)
     }
 }
 
 impl TryFrom<Base64> for Vec<u8> {
     type Error = SerialiseError;
     fn try_from(value: Base64) -> Result<Self, Self::Error> {
-        Ok(Base64::from_base64(value.get_serialised().get_string(), 0))
+        Base64::try_from_base64(value.get_serialised().get_string(), 0)
     }
 }
 
@@ -127,7 +130,7 @@ impl TryFrom<Vec<u8>> for Base64 {
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
         Ok(Self::new(EncodedString::new(
             Encoding::Base64,
-            Self::to_base64(&value),
+            Self::try_to_base64(&value)?,
         )))
     }
 }
@@ -140,21 +143,21 @@ mod tests {
     #[test]
     fn test_to_base64() {
         let string = b"0123456789abcdefghijklmnopqrstuvwxyz";
-        let base64 = Base64::to_base64(string);
+        let base64 = Base64::try_to_base64(string).unwrap_or_else(|_| String::new());
         assert_eq!(base64, "MDEyMzQ1Njc4OWFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6");
     }
 
     #[test]
     fn test_from_base64() {
         let string = "MDEyMzQ1Njc4OWFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6";
-        let bytes = Base64::from_base64(string, 0);
+        let bytes = Base64::try_from_base64(string, 0).unwrap_or_else(|_| vec![]);
         assert_eq!(bytes, b"0123456789abcdefghijklmnopqrstuvwxyz");
     }
 
     #[test]
-    #[should_panic(expected = "invalid base64 character")]
     fn test_from_invalid_base64_panics() {
         let string = "NE1FfXYqCHge2p4MZ56o8gdrDWMiH!XPJLXk9ixxKgUebU7VqB";
-        let _bytes = Base64::from_base64(string, 0);
+        let bytes = Base64::try_from_base64(string, 0);
+        assert!(bytes.is_err());
     }
 }
