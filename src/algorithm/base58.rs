@@ -1,4 +1,4 @@
-use crate::{ByteVec, EncodedString, Encoding, SerialiseError};
+use crate::{EncodedString, SerialiseError};
 
 const ALPHABET: &[u8; 58] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
@@ -139,23 +139,6 @@ impl Base58 {
         }
 
         Ok(bytes)
-    }
-}
-
-impl TryFrom<ByteVec> for Base58 {
-    type Error = SerialiseError;
-    fn try_from(value: ByteVec) -> Result<Self, Self::Error> {
-        Ok(Self::new(EncodedString::new(
-            Encoding::Base58,
-            Self::to_base58(value.get_bytes()),
-        )))
-    }
-}
-
-impl TryFrom<Base58> for EncodedString {
-    type Error = SerialiseError;
-    fn try_from(value: Base58) -> Result<Self, Self::Error> {
-        Ok(value.get_serialised())
     }
 }
 

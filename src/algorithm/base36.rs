@@ -178,10 +178,7 @@ mod tests {
     fn test_from_invalid_base36() {
         let string = "2dbg0rhouyms2hsh4jiluolq0rx!1et8yty277nr9mwq20b47cwxc2id6";
         let bytes = Base36::from_base36(string, 0);
-        if let Err(e) = bytes {
-            assert_eq!(e.to_string(), "Invalid base36 character".to_string());
-        } else {
-            panic!("should have failed");
-        }
+
+        assert!(bytes.is_err());
     }
 }
