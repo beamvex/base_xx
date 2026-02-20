@@ -120,27 +120,25 @@ impl Base58 {
 
     /// Decodes a base58 string into bytes, optionally left-padding to `size`.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Panics if `base58` contains a character outside the base58 alphabet.
-    ///
-    /// Panics if the decoded value requires more than `size` bytes when `size > 0`.
-    #[must_use]
-    pub fn from_base58(base58: &str, size: usize) -> Vec<u8> {
+    /// Returns an error if the decoded value requires more than `size` bytes when `size > 0`.
+    pub fn try_from_base58(base58: &str, size: usize) -> Result<Vec<u8>, SerialiseError> {
         let mut bytes = Self::base58_to_bytes(base58);
 
-        assert!(
-            !(bytes.len() > size && size > 0),
-            "base58 value does not fit in {size} bytes"
-        );
+        if bytes.len() > size && size > 0 {
+            return Err(SerialiseError::new(format!(
+                "base58 value does not fit in {size} bytes"
+            )));
+        }
 
         if bytes.len() < size && size > 0 {
             let mut padded = vec![0u8; size - bytes.len()];
             padded.append(&mut bytes);
-            return padded;
+            return Ok(padded);
         }
 
-        bytes
+        Ok(bytes)
     }
 }
 
@@ -176,14 +174,14 @@ mod tests {
     #[test]
     fn test_from_base58() {
         let string = "NE1FfXYqCHge2p4MZ56o8gdrDWMiHXPJLXk9ixxKgUebU7VqB";
-        let bytes = Base58::from_base58(string, 0);
-        assert_eq!(bytes, b"0123456789abcdefghijklmnopqrstuvwxyz");
+        let bytes = Base58::try_from_base58(string, 0).unwrap_or_else(|_| vec![]);
+        assert_eq!(bytes, b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec());
     }
 
     #[test]
-    #[should_panic(expected = "invalid base58 character")]
-    fn test_from_invalid_base58_panics() {
-        let string = "NE1FfXYqCHge2p4MZ56o8gdrDWMiH!XPJLXk9ixxKgUebU7VqB";
-        let _bytes = Base58::from_base58(string, 0);
+    fn test_from_invalid_base58() {
+        let string = "NE1FfXYqCHge2p4MZ56o8gdrDWMiH(XPJLXk9ixxKgUebU7VqB";
+        let bytes = Base58::try_from_base58(string, 0);
+        assert!(bytes.is_err());
     }
 }

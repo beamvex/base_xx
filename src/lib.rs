@@ -9,6 +9,9 @@
 /// Serialization algorithms and implementations.
 pub mod algorithm;
 
+/// Encoder trait for encoding and decoding data.
+pub mod encoder;
+
 /// Raw byte representation of serializable data.
 pub mod byte_vec;
 
@@ -28,5 +31,6 @@ pub use algorithm::base36::Base36;
 //pub use algorithm::uuencode::Uuencode;
 pub use byte_vec::ByteVec;
 pub use encoded_string::EncodedString;
+pub use encoder::Encoder;
 pub use encoding::Encoding;
 pub use serialise_error::SerialiseError;

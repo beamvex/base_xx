@@ -1,4 +1,4 @@
-use crate::{ByteVec, EncodedString, Encoding, SerialiseError};
+use crate::{Encoder, SerialiseError};
 
 const ALPHABET: &[u8; 36] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 
@@ -7,27 +7,9 @@ const ALPHABET: &[u8; 36] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 /// This type provides methods to encode and decode data using base36 encoding,
 /// which uses the digits 0-9 and letters A-Z to represent data.
 #[derive(Debug)]
-pub struct Base36 {
-    /// The base36-encoded string representation
-    serialised: EncodedString,
-}
+pub struct Base36 {}
 
 impl Base36 {
-    /// Creates a new `Base36` instance.
-    ///
-    /// # Arguments
-    /// * `serialised` - The base36-encoded string
-    #[must_use = "This creates a new Base36 instance but does nothing if unused"]
-    pub const fn new(serialised: EncodedString) -> Self {
-        Self { serialised }
-    }
-
-    /// Returns the base36-encoded string.
-    #[must_use = "This returns the encoded string but does nothing if unused"]
-    pub fn get_serialised(self) -> EncodedString {
-        self.serialised
-    }
-
     /// Encodes a byte slice using base36 encoding.
     ///
     /// # Arguments
@@ -155,20 +137,13 @@ impl Base36 {
     }
 }
 
-impl TryFrom<ByteVec> for Base36 {
-    type Error = SerialiseError;
-    fn try_from(value: ByteVec) -> Result<Self, Self::Error> {
-        Ok(Self::new(EncodedString::new(
-            Encoding::Base36,
-            Self::to_base36(value.get_bytes()),
-        )))
+impl Encoder for Base36 {
+    fn try_encode(bytes: &[u8]) -> Result<String, SerialiseError> {
+        Ok(Self::to_base36(bytes))
     }
-}
 
-impl TryFrom<Base36> for EncodedString {
-    type Error = SerialiseError;
-    fn try_from(value: Base36) -> Result<Self, Self::Error> {
-        Ok(value.get_serialised())
+    fn try_decode(encoded: &str) -> Result<Vec<u8>, SerialiseError> {
+        Self::from_base36(encoded, 0)
     }
 }
 

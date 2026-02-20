@@ -1,4 +1,4 @@
-use crate::{Base36, ByteVec, Encoding, SerialiseError};
+use crate::{Base36, ByteVec, Encoder, Encoding, SerialiseError};
 
 /// String representation of serialized data.
 ///
@@ -40,29 +40,6 @@ impl EncodedString {
     pub const fn get_string(&self) -> &String {
         &self.string
     }
-
-    /// Attempts to decode the serialized string into bytes.
-    ///
-    /// # Errors
-    /// Returns `Err` if the encoding is unsupported or if decoding the string fails.
-    #[must_use = "This returns a Result that must be handled"]
-    pub fn try_decode(self) -> Result<ByteVec, SerialiseError> {
-        match self.encoding {
-            Encoding::Base36 => self.try_decode_base36(),
-            _ => Err(SerialiseError::new("Unsupported encoding".to_string())),
-        }
-    }
-
-    /// Attempts to decode a Base36-encoded string into bytes.
-    ///
-    /// # Errors
-    /// Returns `Err` if the underlying Base36 decoding fails.
-    pub fn try_decode_base36(self) -> Result<ByteVec, SerialiseError> {
-        match Base36::from_base36(self.string.as_str(), 0) {
-            Ok(bytes) => Ok(ByteVec::new(bytes)),
-            Err(error) => Err(error),
-        }
-    }
 }
 
 impl std::fmt::Display for EncodedString {
@@ -90,23 +67,11 @@ where
         Self: Sized,
     {
         match encoded_string.get_encoding() {
-            Encoding::Base36 => Self::try_decode_base36(encoded_string),
+            Encoding::Base36 => match Base36::try_decode(encoded_string.get_string()) {
+                Ok(bytes) => Self::try_from(ByteVec::new(bytes)),
+                Err(e) => Err(SerialiseError::new(e.to_string())),
+            },
             _ => Err(SerialiseError::new("Unsupported encoding".to_string())),
-        }
-    }
-
-    /// Attempts to decode a base36-encoded string into this type.
-    ///
-    /// # Errors
-    /// Returns `Err` if the underlying decoding fails.
-    #[must_use = "decoding returns a result that must be handled"]
-    fn try_decode_base36(encoded_string: EncodedString) -> Result<Self, SerialiseError>
-    where
-        Self: Sized,
-    {
-        match encoded_string.try_decode_base36() {
-            Ok(bytes) => Self::try_from(bytes),
-            Err(error) => Err(error),
         }
     }
 }
@@ -114,33 +79,6 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_decode_base36() {
-        let encoded = EncodedString::new(
-            Encoding::Base36,
-            "2dbg0rhouyms2hsh4jiluolq0rx1et8yty277nr9mwq20b47cwxc2id6".to_string(),
-        );
-        let decoded = encoded.try_decode();
-        assert!(decoded.is_ok());
-        assert_eq!(
-            decoded.unwrap_or_else(|_| ByteVec::new(vec![])).get_bytes(),
-            b"0123456789abcdefghijklmnopqrstuvwxyz"
-        );
-    }
-
-    #[test]
-    fn test_decode_base36_invalid() {
-        let encoded = EncodedString::new(
-            Encoding::Base36,
-            "2dbg0rhouyms2hsh4jiluolq0rx1!et8yty277nr9mwq20b47cwxc2id6".to_string(),
-        );
-        let decoded = encoded.try_decode();
-        assert!(decoded.is_err());
-        if let Err(e) = decoded {
-            assert_eq!(e.to_string(), "Invalid base36 character");
-        }
-    }
 
     #[test]
     fn test_decoable_decode_base36() {
