@@ -1,4 +1,4 @@
-use crate::SerialiseError;
+use crate::{Encoder, SerialiseError};
 
 const ALPHABET: &[u8; 16] = b"0123456789abcdef";
 
@@ -63,6 +63,16 @@ impl Hex {
             out.push((hi << 4) | lo);
         }
         Ok(out)
+    }
+}
+
+impl Encoder for Hex {
+    fn try_encode(bytes: &[u8]) -> Result<String, SerialiseError> {
+        Ok(Self::try_to_hex(bytes).unwrap_or_else(|_| String::new()))
+    }
+
+    fn try_decode(encoded: &str) -> Result<Vec<u8>, SerialiseError> {
+        Self::try_from_hex(encoded)
     }
 }
 

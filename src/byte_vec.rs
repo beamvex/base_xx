@@ -1,4 +1,7 @@
-use crate::{Base36, EncodedString, Encoder, Encoding, SerialiseError};
+use crate::{
+    Base36, EncodedString, Encoder, Encoding, SerialiseError,
+    algorithm::{Base58, Base64, Hex, Uuencode},
+};
 
 /// Raw byte representation of serializable data.
 ///
@@ -55,6 +58,22 @@ where
                     Ok(encoded) => Ok(EncodedString::new(Encoding::Base36, encoded)),
                     Err(error) => Err(error),
                 },
+                Encoding::Base58 => match Base58::try_encode(bytes.get_bytes()) {
+                    Ok(encoded) => Ok(EncodedString::new(Encoding::Base58, encoded)),
+                    Err(error) => Err(error),
+                },
+                Encoding::Base64 => match Base64::try_encode(bytes.get_bytes()) {
+                    Ok(encoded) => Ok(EncodedString::new(Encoding::Base64, encoded)),
+                    Err(error) => Err(error),
+                },
+                Encoding::Hex => match Hex::try_encode(bytes.get_bytes()) {
+                    Ok(encoded) => Ok(EncodedString::new(Encoding::Hex, encoded)),
+                    Err(error) => Err(error),
+                },
+                Encoding::Uuencode => match Uuencode::try_encode(bytes.get_bytes()) {
+                    Ok(encoded) => Ok(EncodedString::new(Encoding::Uuencode, encoded)),
+                    Err(error) => Err(error),
+                },
                 _ => Err(SerialiseError::new("Unsupported encoding".to_string())),
             },
             Err(error) => Err(error),
@@ -92,6 +111,64 @@ mod tests {
                 .unwrap_or_else(|_| EncodedString::new(Encoding::Base36, "no match".to_string()))
                 .get_string(),
             "2dbg0rhouyms2hsh4jiluolq0rx1et8yty277nr9mwq20b47cwxc2id6"
+        );
+    }
+
+    #[test]
+    fn test_encodable_encoding_base58() {
+        struct Test {
+            bytes: Vec<u8>,
+        }
+
+        impl TryFrom<&Test> for ByteVec {
+            type Error = SerialiseError;
+            fn try_from(value: &Test) -> Result<Self, SerialiseError> {
+                Ok(Self::new(value.bytes.clone()))
+            }
+        }
+
+        impl Encodable for Test {}
+
+        let test = Test {
+            bytes: b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec(),
+        };
+
+        let encoded = test.try_encode(Encoding::Base58);
+        assert!(encoded.is_ok());
+        assert_eq!(
+            encoded
+                .unwrap_or_else(|_| EncodedString::new(Encoding::Base58, "no match".to_string()))
+                .get_string(),
+            "NE1FfXYqCHge2p4MZ56o8gdrDWMiHXPJLXk9ixxKgUebU7VqB"
+        );
+    }
+
+    #[test]
+    fn test_encodable_encoding_base64() {
+        struct Test {
+            bytes: Vec<u8>,
+        }
+
+        impl TryFrom<&Test> for ByteVec {
+            type Error = SerialiseError;
+            fn try_from(value: &Test) -> Result<Self, SerialiseError> {
+                Ok(Self::new(value.bytes.clone()))
+            }
+        }
+
+        impl Encodable for Test {}
+
+        let test = Test {
+            bytes: b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec(),
+        };
+
+        let encoded = test.try_encode(Encoding::Base64);
+        assert!(encoded.is_ok());
+        assert_eq!(
+            encoded
+                .unwrap_or_else(|_| EncodedString::new(Encoding::Base64, "no match".to_string()))
+                .get_string(),
+            "MDEyMzQ1Njc4OWFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6"
         );
     }
 }

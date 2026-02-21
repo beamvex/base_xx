@@ -1,4 +1,4 @@
-use crate::{EncodedString, SerialiseError};
+use crate::{EncodedString, Encoder, SerialiseError};
 
 const ALPHABET: &[u8; 58] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
@@ -139,6 +139,16 @@ impl Base58 {
             }
             Err(e) => Err(e),
         }
+    }
+}
+
+impl Encoder for Base58 {
+    fn try_encode(bytes: &[u8]) -> Result<String, SerialiseError> {
+        Ok(Self::to_base58(bytes))
+    }
+
+    fn try_decode(encoded: &str) -> Result<Vec<u8>, SerialiseError> {
+        Self::try_from_base58(encoded, 0)
     }
 }
 
