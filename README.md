@@ -10,6 +10,9 @@ A Rust library for encoding and decoding data in various base-X formats.
 
 - Base36 encoding (0-9 and a-z)
 - Base58 encoding (Bitcoin-style)
+- Base64 encoding (RFC 4648)
+- Hex encoding (lowercase)
+- uuencode (traditional line format)
 - Trait-based design for extensibility
 - Zero-copy where possible
 - Comprehensive error handling
@@ -21,7 +24,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-base_xx = "0.5.0"
+base_xx = "0.6.0"
 ```
 
 ## Usage
@@ -34,9 +37,15 @@ use base_xx::{ByteVec, Encoding};
 let bytes = ByteVec::new(b"Hello, world!".to_vec());
 let base36 = bytes.clone().try_encode(Encoding::Base36)?;
 let base58 = bytes.try_encode(Encoding::Base58)?;
+let base64 = bytes.clone().try_encode(Encoding::Base64)?;
+let hex = bytes.clone().try_encode(Encoding::Hex)?;
+let uuencode = bytes.try_encode(Encoding::Uuencode)?;
 
 println!("Base36: {}", base36);
 println!("Base58: {}", base58);
+println!("Base64: {}", base64);
+println!("Hex: {}", hex);
+println!("uuencode: {}", uuencode);
 ```
 
 ### Implementing for Custom Types
@@ -91,6 +100,9 @@ let decoded = MyType::try_decode(encoded)?;
 
 - **Base36**: Uses digits 0-9 and lowercase letters a-z. Good for case-insensitive human-readable output.
 - **Base58**: Uses Bitcoin-style alphabet, omitting similar-looking characters. Ideal for user-facing identifiers.
+- **Base64**: Standard Base64 encoding.
+- **Hex**: Lowercase hexadecimal encoding.
+- **uuencode**: Traditional uuencode line format.
 
 ## Error Handling
 

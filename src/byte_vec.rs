@@ -74,7 +74,6 @@ where
                     Ok(encoded) => Ok(EncodedString::new(Encoding::Uuencode, encoded)),
                     Err(error) => Err(error),
                 },
-                _ => Err(SerialiseError::new("Unsupported encoding".to_string())),
             },
             Err(error) => Err(error),
         }
