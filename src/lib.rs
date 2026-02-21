@@ -1,7 +1,8 @@
 //! Encoding and decoding utilities for representing data in compact textual forms.
 //!
-//! This crate currently exposes functionality under [`serialise`] for converting
-//! between bytes and encoded strings.
+//! This crate provides conversion between raw bytes and encoded strings.
+//!
+//! See [`ByteVec`], [`EncodedString`], and [`Encoding`] for the main entry points.
 #![deny(missing_docs)]
 
 //! Types and algorithms for encoding/decoding data.
@@ -25,10 +26,10 @@ pub mod serialise_error;
 pub mod encoding;
 
 pub use algorithm::base36::Base36;
-//pub use algorithm::base58::Base58;
-//pub use algorithm::base64::Base64;
-//pub use algorithm::hex::Hex;
-//pub use algorithm::uuencode::Uuencode;
+pub use algorithm::base58::Base58;
+pub use algorithm::base64::Base64;
+pub use algorithm::hex::Hex;
+pub use algorithm::uuencode::Uuencode;
 pub use byte_vec::ByteVec;
 pub use encoded_string::EncodedString;
 pub use encoder::Encoder;
