@@ -132,3 +132,34 @@ impl Uuencode {
         Ok(out)
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_to_uuencode() {
+        let bytes = b"0123456789abcdefghijklmnopqrstuvwxyz";
+        let uuencode = Uuencode::to_uuencode(bytes);
+        assert_eq!(
+            uuencode,
+            "D,#$R,S0U-C<X.6%B8V1E9F=H:6IK;&UN;W!Q<G-T=79W>'EZ\n`\n"
+        );
+    }
+
+    #[test]
+    fn test_from_uuencode() {
+        let string = "D,#$R,S0U-C<X.6%B8V1E9F=H:6IK;&UN;W!Q<G-T=79W>'EZ\n`\n";
+        assert!(matches!(
+            Uuencode::from_uuencode(string),
+            Ok(bytes) if bytes == b"0123456789abcdefghijklmnopqrstuvwxyz"
+        ));
+    }
+
+    #[test]
+    fn test_from_invalid_uuencode_is_err() {
+        let string = "gg";
+        assert!(Uuencode::from_uuencode(string).is_err());
+    }
+}
