@@ -81,22 +81,19 @@ impl Base58 {
     /// # Panics
     /// Panics if the input contains characters outside the base58 alphabet
     #[must_use = "This returns the decoded bytes but does nothing if unused"]
-    pub fn base58_to_bytes(base58: &str) -> Vec<u8> {
+    pub fn base58_to_bytes(base58: &str) -> Result<Vec<u8>, SerialiseError> {
         let s = base58.trim();
         if s.is_empty() || s == "0" {
-            return vec![0];
+            return Ok(vec![0]);
         }
 
         let mut bytes: Vec<u8> = vec![0];
 
         for c in s.bytes() {
-            let digit = ALPHABET.iter().position(|b| *b == c).map_or_else(
-                || panic!("invalid base58 character"),
-                |p| {
-                    u32::try_from(p)
-                        .unwrap_or_else(|_| unreachable!("base58 digit index must fit in u32"))
-                },
-            );
+            let Some(pos) = ALPHABET.iter().position(|&b| b == c) else {
+                return Err(SerialiseError::new("invalid base58 character".to_string()));
+            };
+            let digit = u32::try_from(pos).unwrap_or_else(|_| unreachable!());
 
             let mut carry = digit;
             for b in bytes.iter_mut().rev() {
@@ -115,7 +112,7 @@ impl Base58 {
             bytes.remove(0);
         }
 
-        bytes
+        Ok(bytes)
     }
 
     /// Decodes a base58 string into bytes, optionally left-padding to `size`.

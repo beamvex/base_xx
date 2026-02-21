@@ -118,23 +118,6 @@ impl Base64 {
     }
 }
 
-impl TryFrom<Base64> for Vec<u8> {
-    type Error = SerialiseError;
-    fn try_from(value: Base64) -> Result<Self, Self::Error> {
-        Base64::try_from_base64(value.get_serialised().get_string(), 0)
-    }
-}
-
-impl TryFrom<Vec<u8>> for Base64 {
-    type Error = SerialiseError;
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        Ok(Self::new(EncodedString::new(
-            Encoding::Base64,
-            Self::try_to_base64(&value)?,
-        )))
-    }
-}
-
 #[cfg(test)]
 mod tests {
 
