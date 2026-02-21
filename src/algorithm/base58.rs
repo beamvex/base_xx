@@ -78,8 +78,8 @@ impl Base58 {
     /// # Returns
     /// The decoded bytes
     ///
-    /// # Panics
-    /// Panics if the input contains characters outside the base58 alphabet
+    /// # Errors
+    /// Returns an error if the input contains characters outside the base58 alphabet.
     #[must_use = "This returns the decoded bytes but does nothing if unused"]
     pub fn base58_to_bytes(base58: &str) -> Result<Vec<u8>, SerialiseError> {
         let s = base58.trim();
@@ -121,21 +121,24 @@ impl Base58 {
     ///
     /// Returns an error if the decoded value requires more than `size` bytes when `size > 0`.
     pub fn try_from_base58(base58: &str, size: usize) -> Result<Vec<u8>, SerialiseError> {
-        let mut bytes = Self::base58_to_bytes(base58);
+        match Self::base58_to_bytes(base58) {
+            Ok(mut bytes) => {
+                if bytes.len() > size && size > 0 {
+                    return Err(SerialiseError::new(format!(
+                        "base58 value does not fit in {size} bytes"
+                    )));
+                }
 
-        if bytes.len() > size && size > 0 {
-            return Err(SerialiseError::new(format!(
-                "base58 value does not fit in {size} bytes"
-            )));
+                if bytes.len() < size && size > 0 {
+                    let mut padded = vec![0u8; size - bytes.len()];
+                    padded.append(&mut bytes);
+                    return Ok(padded);
+                }
+
+                Ok(bytes)
+            }
+            Err(e) => Err(e),
         }
-
-        if bytes.len() < size && size > 0 {
-            let mut padded = vec![0u8; size - bytes.len()];
-            padded.append(&mut bytes);
-            return Ok(padded);
-        }
-
-        Ok(bytes)
     }
 }
 
