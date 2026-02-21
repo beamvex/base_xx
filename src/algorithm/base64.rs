@@ -1,4 +1,4 @@
-use crate::{EncodedString, Encoding, SerialiseError};
+use crate::{EncodedString, SerialiseError};
 
 const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 

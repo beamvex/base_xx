@@ -80,23 +80,6 @@ impl Hex {
     }
 }
 
-impl TryFrom<Hex> for Vec<u8> {
-    type Error = SerialiseError;
-    fn try_from(value: Hex) -> Result<Self, Self::Error> {
-        Hex::try_from_hex(value.get_serialised().get_string())
-    }
-}
-
-impl TryFrom<Vec<u8>> for Hex {
-    type Error = SerialiseError;
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        Ok(Self::new(EncodedString::new(
-            Encoding::Hex,
-            Self::try_to_hex(&value)?,
-        )))
-    }
-}
-
 #[cfg(test)]
 mod tests {
 
