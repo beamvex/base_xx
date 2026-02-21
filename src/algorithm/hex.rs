@@ -1,26 +1,12 @@
-use crate::{EncodedString, Encoding, SerialiseError};
+use crate::SerialiseError;
 
 const ALPHABET: &[u8; 16] = b"0123456789abcdef";
 
 /// Hex (base16) encoding implementation (RFC 4648).
 #[derive(Debug)]
-pub struct Hex {
-    serialised: EncodedString,
-}
+pub struct Hex {}
 
 impl Hex {
-    /// Create a new Hex instance.
-    #[must_use]
-    pub const fn new(serialised: EncodedString) -> Self {
-        Self { serialised }
-    }
-
-    /// Get the serialised data.
-    #[must_use]
-    pub fn get_serialised(self) -> EncodedString {
-        self.serialised
-    }
-
     /// Convert bytes to a lowercase hex string.
     ///
     /// # Errors

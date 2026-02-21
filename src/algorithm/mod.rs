@@ -10,11 +10,11 @@ pub mod base64;
 /// Hexadecimal encoding implementation (0-9 and A-F).
 pub mod hex;
 
-// UUEncoding implementation.
-//pub mod uuencode;
+/// `uuencode` implementation.
+pub mod uuencode;
 
 pub use base36::Base36;
 pub use base58::Base58;
 pub use base64::Base64;
 pub use hex::Hex;
-//pub use uuencode::Uuencode;
+pub use uuencode::Uuencode;
