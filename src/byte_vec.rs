@@ -171,4 +171,62 @@ mod tests {
             "MDEyMzQ1Njc4OWFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6"
         );
     }
+
+    #[test]
+    fn test_encodable_encoding_hex() {
+        struct Test {
+            bytes: Vec<u8>,
+        }
+
+        impl TryFrom<&Test> for ByteVec {
+            type Error = SerialiseError;
+            fn try_from(value: &Test) -> Result<Self, SerialiseError> {
+                Ok(Self::new(value.bytes.clone()))
+            }
+        }
+
+        impl Encodable for Test {}
+
+        let test = Test {
+            bytes: b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec(),
+        };
+
+        let encoded = test.try_encode(Encoding::Hex);
+        assert!(encoded.is_ok());
+        assert_eq!(
+            encoded
+                .unwrap_or_else(|_| EncodedString::new(Encoding::Hex, "no match".to_string()))
+                .get_string(),
+            "303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a"
+        );
+    }
+
+    #[test]
+    fn test_encodable_encoding_uuencode() {
+        struct Test {
+            bytes: Vec<u8>,
+        }
+
+        impl TryFrom<&Test> for ByteVec {
+            type Error = SerialiseError;
+            fn try_from(value: &Test) -> Result<Self, SerialiseError> {
+                Ok(Self::new(value.bytes.clone()))
+            }
+        }
+
+        impl Encodable for Test {}
+
+        let test = Test {
+            bytes: b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec(),
+        };
+
+        let encoded = test.try_encode(Encoding::Uuencode);
+        assert!(encoded.is_ok());
+        assert_eq!(
+            encoded
+                .unwrap_or_else(|_| EncodedString::new(Encoding::Uuencode, "no match".to_string()))
+                .get_string(),
+            "D,#$R,S0U-C<X.6%B8V1E9F=H:6IK;&UN;W!Q<G-T=79W>'EZ\n`\n"
+        );
+    }
 }
