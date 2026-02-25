@@ -1,4 +1,4 @@
-use crate::{Encoder, SerialiseError};
+use crate::{EncodedString, Encoder, Encoding, SerialiseError};
 
 const ALPHABET: &[u8; 36] = b"0123456789abcdefghijklmnopqrstuvwxyz";
 
@@ -138,12 +138,12 @@ impl Base36 {
 }
 
 impl Encoder for Base36 {
-    fn try_encode(bytes: &[u8]) -> Result<String, SerialiseError> {
-        Ok(Self::to_base36(bytes))
+    fn try_encode(bytes: &[u8]) -> Result<EncodedString, SerialiseError> {
+        Ok(EncodedString::new(Encoding::Base36, Self::to_base36(bytes)))
     }
 
-    fn try_decode(encoded: &str) -> Result<Vec<u8>, SerialiseError> {
-        Self::from_base36(encoded, 0)
+    fn try_decode(encoded: &EncodedString) -> Result<Vec<u8>, SerialiseError> {
+        Self::from_base36(encoded.get_string(), 0)
     }
 }
 

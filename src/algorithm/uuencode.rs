@@ -1,4 +1,4 @@
-use crate::{Encoder, SerialiseError};
+use crate::{EncodedString, Encoder, Encoding, SerialiseError};
 
 /// `uuencode` implementation.
 #[derive(Debug)]
@@ -134,12 +134,15 @@ impl Uuencode {
 }
 
 impl Encoder for Uuencode {
-    fn try_encode(bytes: &[u8]) -> Result<String, SerialiseError> {
-        Ok(Self::to_uuencode(bytes))
+    fn try_encode(bytes: &[u8]) -> Result<EncodedString, SerialiseError> {
+        Ok(EncodedString::new(
+            Encoding::Uuencode,
+            Self::to_uuencode(bytes),
+        ))
     }
 
-    fn try_decode(encoded: &str) -> Result<Vec<u8>, SerialiseError> {
-        Self::from_uuencode(encoded)
+    fn try_decode(encoded: &EncodedString) -> Result<Vec<u8>, SerialiseError> {
+        Self::from_uuencode(encoded.get_string())
     }
 }
 
