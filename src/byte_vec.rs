@@ -28,6 +28,43 @@ impl ByteVec {
     pub fn get_bytes(&self) -> &[u8] {
         &self.bytes
     }
+
+    /// Encodes this type using the specified `Encoding`.
+    ///
+    /// # Parameters
+    /// * `value` - The value to encode
+    /// * `encoding` - The encoding to use when encoding this type.
+    ///
+    /// # Returns
+    /// A `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs.
+    ///
+    /// # Errors
+    /// * `SerialiseError` - If the specified encoding is unsupported or an error occurs during serialisation.
+    #[must_use = "The result of this function is a `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs."]
+    pub fn try_encode(self, encoding: Encoding) -> Result<EncodedString, SerialiseError> {
+        match encoding {
+            Encoding::Base36 => match Base36::try_encode(self.bytes.as_slice()) {
+                Ok(encoded) => Ok(encoded),
+                Err(error) => Err(error),
+            },
+            Encoding::Base58 => match Base58::try_encode(self.bytes.as_slice()) {
+                Ok(encoded) => Ok(encoded),
+                Err(error) => Err(error),
+            },
+            Encoding::Base64 => match Base64::try_encode(self.bytes.as_slice()) {
+                Ok(encoded) => Ok(encoded),
+                Err(error) => Err(error),
+            },
+            Encoding::Hex => match Hex::try_encode(self.bytes.as_slice()) {
+                Ok(encoded) => Ok(encoded),
+                Err(error) => Err(error),
+            },
+            Encoding::Uuencode => match Uuencode::try_encode(self.bytes.as_slice()) {
+                Ok(encoded) => Ok(encoded),
+                Err(error) => Err(error),
+            },
+        }
+    }
 }
 
 /// Implements encoding functionality for a type that can be converted to bytes.
@@ -53,28 +90,7 @@ where
     #[must_use = "The result of this function is a `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs."]
     fn try_encode(&self, encoding: Encoding) -> Result<EncodedString, SerialiseError> {
         match ByteVec::try_from(self) {
-            Ok(bytes) => match encoding {
-                Encoding::Base36 => match Base36::try_encode(bytes.get_bytes()) {
-                    Ok(encoded) => Ok(EncodedString::new(Encoding::Base36, encoded)),
-                    Err(error) => Err(error),
-                },
-                Encoding::Base58 => match Base58::try_encode(bytes.get_bytes()) {
-                    Ok(encoded) => Ok(EncodedString::new(Encoding::Base58, encoded)),
-                    Err(error) => Err(error),
-                },
-                Encoding::Base64 => match Base64::try_encode(bytes.get_bytes()) {
-                    Ok(encoded) => Ok(EncodedString::new(Encoding::Base64, encoded)),
-                    Err(error) => Err(error),
-                },
-                Encoding::Hex => match Hex::try_encode(bytes.get_bytes()) {
-                    Ok(encoded) => Ok(EncodedString::new(Encoding::Hex, encoded)),
-                    Err(error) => Err(error),
-                },
-                Encoding::Uuencode => match Uuencode::try_encode(bytes.get_bytes()) {
-                    Ok(encoded) => Ok(EncodedString::new(Encoding::Uuencode, encoded)),
-                    Err(error) => Err(error),
-                },
-            },
+            Ok(bytes) => bytes.try_encode(encoding),
             Err(error) => Err(error),
         }
     }

@@ -1,4 +1,4 @@
-use crate::SerialiseError;
+use crate::{EncodedString, SerialiseError};
 
 /// Trait for types that can encode and decode data
 pub trait Encoder {
@@ -12,7 +12,7 @@ pub trait Encoder {
     ///
     /// # Errors
     /// Returns `SerialiseError` if encoding fails
-    fn try_encode(bytes: &[u8]) -> Result<String, SerialiseError>;
+    fn try_encode(bytes: &[u8]) -> Result<EncodedString, SerialiseError>;
 
     /// Attempts to decode a string back into bytes
     ///
@@ -24,5 +24,5 @@ pub trait Encoder {
     ///
     /// # Errors
     /// Returns `SerialiseError` if decoding fails
-    fn try_decode(encoded: &str) -> Result<Vec<u8>, SerialiseError>;
+    fn try_decode(encoded: &EncodedString) -> Result<Vec<u8>, SerialiseError>;
 }
