@@ -43,6 +43,39 @@ impl EncodedString {
     pub const fn get_string(&self) -> &String {
         &self.string
     }
+
+    /// Attempts to decode an encoded string into this type.
+    ///
+    /// # Errors
+    /// Returns `Err` if the underlying decoding fails.
+    #[must_use = "decoding returns a result that must be handled"]
+    fn try_decode(self) -> Result<ByteVec, SerialiseError>
+    where
+        Self: Sized,
+    {
+        match self.get_encoding() {
+            Encoding::Base36 => match Base36::try_decode(&self) {
+                Ok(bytes) => Ok(ByteVec::new(bytes)),
+                Err(e) => Err(SerialiseError::new(e.to_string())),
+            },
+            Encoding::Base58 => match Base58::try_decode(&self) {
+                Ok(bytes) => Ok(ByteVec::new(bytes)),
+                Err(e) => Err(SerialiseError::new(e.to_string())),
+            },
+            Encoding::Base64 => match Base64::try_decode(&self) {
+                Ok(bytes) => Ok(ByteVec::new(bytes)),
+                Err(e) => Err(SerialiseError::new(e.to_string())),
+            },
+            Encoding::Hex => match Hex::try_decode(&self) {
+                Ok(bytes) => Ok(ByteVec::new(bytes)),
+                Err(e) => Err(SerialiseError::new(e.to_string())),
+            },
+            Encoding::Uuencode => match Uuencode::try_decode(&self) {
+                Ok(bytes) => Ok(ByteVec::new(bytes)),
+                Err(e) => Err(SerialiseError::new(e.to_string())),
+            },
+        }
+    }
 }
 
 impl std::fmt::Display for EncodedString {
@@ -69,27 +102,9 @@ where
     where
         Self: Sized,
     {
-        match encoded_string.get_encoding() {
-            Encoding::Base36 => match Base36::try_decode(encoded_string.get_string()) {
-                Ok(bytes) => Self::try_from(ByteVec::new(bytes)),
-                Err(e) => Err(SerialiseError::new(e.to_string())),
-            },
-            Encoding::Base58 => match Base58::try_decode(encoded_string.get_string()) {
-                Ok(bytes) => Self::try_from(ByteVec::new(bytes)),
-                Err(e) => Err(SerialiseError::new(e.to_string())),
-            },
-            Encoding::Base64 => match Base64::try_decode(encoded_string.get_string()) {
-                Ok(bytes) => Self::try_from(ByteVec::new(bytes)),
-                Err(e) => Err(SerialiseError::new(e.to_string())),
-            },
-            Encoding::Hex => match Hex::try_decode(encoded_string.get_string()) {
-                Ok(bytes) => Self::try_from(ByteVec::new(bytes)),
-                Err(e) => Err(SerialiseError::new(e.to_string())),
-            },
-            Encoding::Uuencode => match Uuencode::try_decode(encoded_string.get_string()) {
-                Ok(bytes) => Self::try_from(ByteVec::new(bytes)),
-                Err(e) => Err(SerialiseError::new(e.to_string())),
-            },
+        match encoded_string.try_decode() {
+            Ok(byte_vec) => Self::try_from(byte_vec),
+            Err(e) => Err(e),
         }
     }
 }
