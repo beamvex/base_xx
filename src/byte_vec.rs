@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::{
     Base36, EncodedString, Encoder, Encoding, SerialiseError,
     algorithm::{Base58, Base64, Hex, Uuencode},
@@ -8,7 +10,7 @@ use crate::{
 /// This type represents the raw bytes of a serializable structure along with
 /// its type information. It serves as an intermediate format between the
 /// original data and its string representation.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct ByteVec {
     bytes: Vec<u8>,
 }
@@ -64,6 +66,19 @@ impl ByteVec {
                 Err(error) => Err(error),
             },
         }
+    }
+}
+
+impl Debug for ByteVec {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let bytes_as_string = match self.try_encode(Encoding::Base58) {
+            Ok(encoded) => encoded.get_string().clone(),
+            Err(_) => "<base58 encoding failed>".to_string().clone(),
+        };
+
+        let mut debug = f.debug_struct("ByteVec");
+        debug.field("bytes", &bytes_as_string);
+        debug.finish()
     }
 }
 
