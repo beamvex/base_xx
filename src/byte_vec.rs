@@ -43,7 +43,7 @@ impl ByteVec {
     /// # Errors
     /// * `SerialiseError` - If the specified encoding is unsupported or an error occurs during serialisation.
     #[must_use = "The result of this function is a `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs."]
-    pub fn try_encode(self, encoding: Encoding) -> Result<EncodedString, SerialiseError> {
+    pub fn try_encode(&self, encoding: Encoding) -> Result<EncodedString, SerialiseError> {
         match encoding {
             Encoding::Base36 => match Base36::try_encode(self.bytes.as_slice()) {
                 Ok(encoded) => Ok(encoded),
@@ -71,10 +71,10 @@ impl ByteVec {
 
 impl Debug for ByteVec {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let bytes_as_string = match self.try_encode(Encoding::Base58) {
-            Ok(encoded) => encoded.get_string().clone(),
-            Err(_) => "<base58 encoding failed>".to_string().clone(),
-        };
+        let bytes_as_string = self.try_encode(Encoding::Base58).map_or_else(
+            |_| "<base58 encoding failed>".to_string(),
+            |encoded| encoded.get_string().clone(),
+        );
 
         let mut debug = f.debug_struct("ByteVec");
         debug.field("bytes", &bytes_as_string);
