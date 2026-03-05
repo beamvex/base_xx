@@ -24,7 +24,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-base_xx = "0.7.0"   
+base_xx = "0.7.1"
 ```
 
 ## Usage

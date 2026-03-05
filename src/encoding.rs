@@ -2,7 +2,7 @@
 ///
 /// This enum represents the different formats that can be used to serialize
 /// data structures into string representations.
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub enum Encoding {
     /// Base36 encoding (0-9 and A-Z)
     Base36,
