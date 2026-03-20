@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, rc::Rc};
 
 use crate::{
     Base36, EncodedString, Encoder, Encoding, SerialiseError,
@@ -12,7 +12,7 @@ use crate::{
 /// original data and its string representation.
 #[derive(Clone, PartialEq, Eq)]
 pub struct ByteVec {
-    bytes: Vec<u8>,
+    bytes: Rc<Vec<u8>>,
 }
 
 impl ByteVec {
@@ -21,7 +21,7 @@ impl ByteVec {
     /// # Arguments
     /// * `bytes` - The raw byte data
     #[must_use = "This creates a new ByteVec instance but does nothing if unused"]
-    pub const fn new(bytes: Vec<u8>) -> Self {
+    pub const fn new(bytes: Rc<Vec<u8>>) -> Self {
         Self { bytes }
     }
 
@@ -89,7 +89,8 @@ impl Debug for ByteVec {
 ///
 pub trait Encodable
 where
-    for<'a> ByteVec: TryFrom<&'a Self, Error = SerialiseError>,
+    Self: Clone,
+    ByteVec: TryFrom<Rc<Self>, Error = SerialiseError>,
 {
     /// Encodes this type using the specified `Encoding`.
     ///
@@ -104,7 +105,7 @@ where
     /// * `SerialiseError` - If the specified encoding is unsupported or an error occurs during serialisation.
     #[must_use = "The result of this function is a `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs."]
     fn try_encode(&self, encoding: Encoding) -> Result<EncodedString, SerialiseError> {
-        match ByteVec::try_from(self) {
+        match ByteVec::try_from(Rc::new(self.clone())) {
             Ok(bytes) => bytes.try_encode(encoding),
             Err(error) => Err(error),
         }
@@ -117,21 +118,22 @@ mod tests {
 
     #[test]
     fn test_encodable_encoding_base36() {
+        #[derive(Clone)]
         struct Test {
-            bytes: Vec<u8>,
+            bytes: Rc<Vec<u8>>,
         }
 
-        impl TryFrom<&Test> for ByteVec {
+        impl TryFrom<Rc<Test>> for ByteVec {
             type Error = SerialiseError;
-            fn try_from(value: &Test) -> Result<Self, SerialiseError> {
-                Ok(Self::new(value.bytes.clone()))
+            fn try_from(value: Rc<Test>) -> Result<Self, SerialiseError> {
+                Ok(Self::new(Rc::clone(&value.bytes)))
             }
         }
 
         impl Encodable for Test {}
 
         let test = Test {
-            bytes: b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec(),
+            bytes: Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec()),
         };
 
         let encoded = test.try_encode(Encoding::Base36);
@@ -146,13 +148,14 @@ mod tests {
 
     #[test]
     fn test_encodable_encoding_base58() {
+        #[derive(Clone)]
         struct Test {
-            bytes: Vec<u8>,
+            bytes: Rc<Vec<u8>>,
         }
 
-        impl TryFrom<&Test> for ByteVec {
+        impl TryFrom<Rc<Test>> for ByteVec {
             type Error = SerialiseError;
-            fn try_from(value: &Test) -> Result<Self, SerialiseError> {
+            fn try_from(value: Rc<Test>) -> Result<Self, SerialiseError> {
                 Ok(Self::new(value.bytes.clone()))
             }
         }
@@ -175,13 +178,14 @@ mod tests {
 
     #[test]
     fn test_encodable_encoding_base64() {
+        #[derive(Clone)]
         struct Test {
             bytes: Vec<u8>,
         }
 
-        impl TryFrom<&Test> for ByteVec {
+        impl TryFrom<Rc<Test>> for ByteVec {
             type Error = SerialiseError;
-            fn try_from(value: &Test) -> Result<Self, SerialiseError> {
+            fn try_from(value: Rc<Test>) -> Result<Self, SerialiseError> {
                 Ok(Self::new(value.bytes.clone()))
             }
         }
@@ -204,13 +208,14 @@ mod tests {
 
     #[test]
     fn test_encodable_encoding_hex() {
+        #[derive(Clone)]
         struct Test {
             bytes: Vec<u8>,
         }
 
-        impl TryFrom<&Test> for ByteVec {
+        impl TryFrom<Rc<Test>> for ByteVec {
             type Error = SerialiseError;
-            fn try_from(value: &Test) -> Result<Self, SerialiseError> {
+            fn try_from(value: Rc<Test>) -> Result<Self, SerialiseError> {
                 Ok(Self::new(value.bytes.clone()))
             }
         }
@@ -233,13 +238,14 @@ mod tests {
 
     #[test]
     fn test_encodable_encoding_uuencode() {
+        #[derive(Clone)]
         struct Test {
             bytes: Vec<u8>,
         }
 
-        impl TryFrom<&Test> for ByteVec {
+        impl TryFrom<Rc<Test>> for ByteVec {
             type Error = SerialiseError;
-            fn try_from(value: &Test) -> Result<Self, SerialiseError> {
+            fn try_from(value: Rc<Test>) -> Result<Self, SerialiseError> {
                 Ok(Self::new(value.bytes.clone()))
             }
         }
