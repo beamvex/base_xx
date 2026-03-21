@@ -7,7 +7,7 @@ use crate::{
 ///
 /// This type represents data that has been serialized into a string format,
 /// along with information about which serialization format was used.
-#[derive(Debug, Clone)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct EncodedString {
     /// The format used to serialize the data
     encoding: Encoding,

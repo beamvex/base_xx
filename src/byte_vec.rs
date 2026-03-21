@@ -10,7 +10,7 @@ use crate::{
 /// This type represents the raw bytes of a serializable structure along with
 /// its type information. It serves as an intermediate format between the
 /// original data and its string representation.
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ByteVec {
     bytes: Rc<Vec<u8>>,
 }
