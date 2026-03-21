@@ -89,7 +89,6 @@ impl Debug for ByteVec {
 ///
 pub trait Encodable
 where
-    Self: Clone,
     ByteVec: TryFrom<Rc<Self>, Error = SerialiseError>,
 {
     /// Encodes this type using the specified `Encoding`.
@@ -104,8 +103,8 @@ where
     /// # Errors
     /// * `SerialiseError` - If the specified encoding is unsupported or an error occurs during serialisation.
     #[must_use = "The result of this function is a `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs."]
-    fn try_encode(&self, encoding: Encoding) -> Result<EncodedString, SerialiseError> {
-        match ByteVec::try_from(Rc::new(self.clone())) {
+    fn try_encode(self: Rc<Self>, encoding: Encoding) -> Result<EncodedString, SerialiseError> {
+        match ByteVec::try_from(self) {
             Ok(bytes) => bytes.try_encode(encoding),
             Err(error) => Err(error),
         }
@@ -118,7 +117,6 @@ mod tests {
 
     #[test]
     fn test_encodable_encoding_base36() {
-        #[derive(Clone)]
         struct Test {
             bytes: Rc<Vec<u8>>,
         }
@@ -132,9 +130,9 @@ mod tests {
 
         impl Encodable for Test {}
 
-        let test = Test {
+        let test = Rc::new(Test {
             bytes: Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec()),
-        };
+        });
 
         let encoded = test.try_encode(Encoding::Base36);
         assert!(encoded.is_ok());
@@ -148,7 +146,6 @@ mod tests {
 
     #[test]
     fn test_encodable_encoding_base58() {
-        #[derive(Clone)]
         struct Test {
             bytes: Rc<Vec<u8>>,
         }
@@ -162,9 +159,9 @@ mod tests {
 
         impl Encodable for Test {}
 
-        let test = Test {
-            bytes: b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec(),
-        };
+        let test = Rc::new(Test {
+            bytes: Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec()),
+        });
 
         let encoded = test.try_encode(Encoding::Base58);
         assert!(encoded.is_ok());
@@ -178,9 +175,8 @@ mod tests {
 
     #[test]
     fn test_encodable_encoding_base64() {
-        #[derive(Clone)]
         struct Test {
-            bytes: Vec<u8>,
+            bytes: Rc<Vec<u8>>,
         }
 
         impl TryFrom<Rc<Test>> for ByteVec {
@@ -192,9 +188,9 @@ mod tests {
 
         impl Encodable for Test {}
 
-        let test = Test {
-            bytes: b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec(),
-        };
+        let test = Rc::new(Test {
+            bytes: Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec()),
+        });
 
         let encoded = test.try_encode(Encoding::Base64);
         assert!(encoded.is_ok());
@@ -208,9 +204,8 @@ mod tests {
 
     #[test]
     fn test_encodable_encoding_hex() {
-        #[derive(Clone)]
         struct Test {
-            bytes: Vec<u8>,
+            bytes: Rc<Vec<u8>>,
         }
 
         impl TryFrom<Rc<Test>> for ByteVec {
@@ -222,9 +217,9 @@ mod tests {
 
         impl Encodable for Test {}
 
-        let test = Test {
-            bytes: b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec(),
-        };
+        let test = Rc::new(Test {
+            bytes: Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec()),
+        });
 
         let encoded = test.try_encode(Encoding::Hex);
         assert!(encoded.is_ok());
@@ -238,9 +233,8 @@ mod tests {
 
     #[test]
     fn test_encodable_encoding_uuencode() {
-        #[derive(Clone)]
         struct Test {
-            bytes: Vec<u8>,
+            bytes: Rc<Vec<u8>>,
         }
 
         impl TryFrom<Rc<Test>> for ByteVec {
@@ -252,9 +246,9 @@ mod tests {
 
         impl Encodable for Test {}
 
-        let test = Test {
-            bytes: b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec(),
-        };
+        let test = Rc::new(Test {
+            bytes: Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec()),
+        });
 
         let encoded = test.try_encode(Encoding::Uuencode);
         assert!(encoded.is_ok());

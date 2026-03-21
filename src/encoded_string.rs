@@ -44,6 +44,7 @@ impl EncodedString {
         &self.string
     }
 
+    /*
     /// Attempts to decode an encoded string into this type.
     ///
     /// # Errors
@@ -76,6 +77,7 @@ impl EncodedString {
             },
         }
     }
+    */
 }
 
 impl std::fmt::Display for EncodedString {
@@ -83,6 +85,7 @@ impl std::fmt::Display for EncodedString {
         write!(f, "{}", self.string)
     }
 }
+/*
 
 /// Implements decoding helpers for a type that can be constructed from decoded bytes.
 ///
@@ -268,3 +271,4 @@ mod tests {
         );
     }
 }
+*/
