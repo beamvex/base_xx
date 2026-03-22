@@ -111,7 +111,6 @@ where
     }
 }
 
-/*
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -123,10 +122,10 @@ mod tests {
             value: Vec<u8>,
         }
 
-        impl TryFrom<ByteVec> for TestType {
+        impl TryFrom<Rc<ByteVec>> for TestType {
             type Error = SerialiseError;
 
-            fn try_from(value: ByteVec) -> Result<Self, Self::Error> {
+            fn try_from(value: Rc<ByteVec>) -> Result<Self, Self::Error> {
                 Ok(Self {
                     value: value.get_bytes().to_vec(),
                 })
@@ -154,10 +153,10 @@ mod tests {
             value: Vec<u8>,
         }
 
-        impl TryFrom<ByteVec> for TestType {
+        impl TryFrom<Rc<ByteVec>> for TestType {
             type Error = SerialiseError;
 
-            fn try_from(value: ByteVec) -> Result<Self, Self::Error> {
+            fn try_from(value: Rc<ByteVec>) -> Result<Self, Self::Error> {
                 Ok(Self {
                     value: value.get_bytes().to_vec(),
                 })
@@ -185,10 +184,10 @@ mod tests {
             value: Vec<u8>,
         }
 
-        impl TryFrom<ByteVec> for TestType {
+        impl TryFrom<Rc<ByteVec>> for TestType {
             type Error = SerialiseError;
 
-            fn try_from(value: ByteVec) -> Result<Self, Self::Error> {
+            fn try_from(value: Rc<ByteVec>) -> Result<Self, Self::Error> {
                 Ok(Self {
                     value: value.get_bytes().to_vec(),
                 })
@@ -216,10 +215,10 @@ mod tests {
             value: Vec<u8>,
         }
 
-        impl TryFrom<ByteVec> for TestType {
+        impl TryFrom<Rc<ByteVec>> for TestType {
             type Error = SerialiseError;
 
-            fn try_from(value: ByteVec) -> Result<Self, Self::Error> {
+            fn try_from(value: Rc<ByteVec>) -> Result<Self, Self::Error> {
                 Ok(Self {
                     value: value.get_bytes().to_vec(),
                 })
@@ -247,10 +246,10 @@ mod tests {
             value: Vec<u8>,
         }
 
-        impl TryFrom<ByteVec> for TestType {
+        impl TryFrom<Rc<ByteVec>> for TestType {
             type Error = SerialiseError;
 
-            fn try_from(value: ByteVec) -> Result<Self, Self::Error> {
+            fn try_from(value: Rc<ByteVec>) -> Result<Self, Self::Error> {
                 Ok(Self {
                     value: value.get_bytes().to_vec(),
                 })
@@ -271,4 +270,3 @@ mod tests {
         );
     }
 }
-*/
