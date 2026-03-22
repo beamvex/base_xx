@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::{EncodedString, Encoder, Encoding, SerialiseError};
 
@@ -121,15 +121,15 @@ impl Base64 {
 }
 
 impl Encoder for Base64 {
-    fn try_encode(bytes: Rc<Vec<u8>>) -> Result<EncodedString, SerialiseError> {
+    fn try_encode(bytes: Arc<Vec<u8>>) -> Result<EncodedString, SerialiseError> {
         Ok(EncodedString::new(
             Encoding::Base64,
             Self::try_to_base64(&bytes).unwrap_or_else(|_| String::new()),
         ))
     }
 
-    fn try_decode(encoded: &EncodedString) -> Result<Rc<Vec<u8>>, SerialiseError> {
-        Ok(Rc::new(Self::try_from_base64(encoded.get_string(), 0)?))
+    fn try_decode(encoded: &EncodedString) -> Result<Arc<Vec<u8>>, SerialiseError> {
+        Ok(Arc::new(Self::try_from_base64(encoded.get_string(), 0)?))
     }
 }
 
@@ -140,7 +140,7 @@ mod tests {
 
     #[test]
     fn test_to_base64() {
-        let string = Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec());
+        let string = Arc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec());
         let base64 = Base64::try_to_base64(&string).unwrap_or_else(|_| String::new());
         assert_eq!(base64, "MDEyMzQ1Njc4OWFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6");
     }

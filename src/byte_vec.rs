@@ -1,4 +1,4 @@
-use std::{fmt::Debug, rc::Rc};
+use std::{fmt::Debug, sync::Arc};
 
 use crate::{
     Base36, EncodedString, Encoder, Encoding, SerialiseError,
@@ -12,7 +12,7 @@ use crate::{
 /// original data and its string representation.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ByteVec {
-    bytes: Rc<Vec<u8>>,
+    bytes: Arc<Vec<u8>>,
 }
 
 impl ByteVec {
@@ -21,7 +21,7 @@ impl ByteVec {
     /// # Arguments
     /// * `bytes` - The raw byte data
     #[must_use = "This creates a new ByteVec instance but does nothing if unused"]
-    pub const fn new(bytes: Rc<Vec<u8>>) -> Self {
+    pub const fn new(bytes: Arc<Vec<u8>>) -> Self {
         Self { bytes }
     }
 
@@ -45,23 +45,23 @@ impl ByteVec {
     #[must_use = "The result of this function is a `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs."]
     pub fn try_encode(&self, encoding: Encoding) -> Result<EncodedString, SerialiseError> {
         match encoding {
-            Encoding::Base36 => match Base36::try_encode(Rc::clone(&self.bytes)) {
+            Encoding::Base36 => match Base36::try_encode(Arc::clone(&self.bytes)) {
                 Ok(encoded) => Ok(encoded),
                 Err(error) => Err(error),
             },
-            Encoding::Base58 => match Base58::try_encode(Rc::clone(&self.bytes)) {
+            Encoding::Base58 => match Base58::try_encode(Arc::clone(&self.bytes)) {
                 Ok(encoded) => Ok(encoded),
                 Err(error) => Err(error),
             },
-            Encoding::Base64 => match Base64::try_encode(Rc::clone(&self.bytes)) {
+            Encoding::Base64 => match Base64::try_encode(Arc::clone(&self.bytes)) {
                 Ok(encoded) => Ok(encoded),
                 Err(error) => Err(error),
             },
-            Encoding::Hex => match Hex::try_encode(Rc::clone(&self.bytes)) {
+            Encoding::Hex => match Hex::try_encode(Arc::clone(&self.bytes)) {
                 Ok(encoded) => Ok(encoded),
                 Err(error) => Err(error),
             },
-            Encoding::Uuencode => match Uuencode::try_encode(Rc::clone(&self.bytes)) {
+            Encoding::Uuencode => match Uuencode::try_encode(Arc::clone(&self.bytes)) {
                 Ok(encoded) => Ok(encoded),
                 Err(error) => Err(error),
             },
@@ -89,7 +89,7 @@ impl Debug for ByteVec {
 ///
 pub trait Encodable
 where
-    ByteVec: TryFrom<Rc<Self>, Error = SerialiseError>,
+    ByteVec: TryFrom<Arc<Self>, Error = SerialiseError>,
 {
     /// Encodes this type using the specified `Encoding`.
     ///
@@ -103,7 +103,7 @@ where
     /// # Errors
     /// * `SerialiseError` - If the specified encoding is unsupported or an error occurs during serialisation.
     #[must_use = "The result of this function is a `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs."]
-    fn try_encode(self: Rc<Self>, encoding: Encoding) -> Result<EncodedString, SerialiseError> {
+    fn try_encode(self: Arc<Self>, encoding: Encoding) -> Result<EncodedString, SerialiseError> {
         match ByteVec::try_from(self) {
             Ok(bytes) => bytes.try_encode(encoding),
             Err(error) => Err(error),
@@ -118,20 +118,20 @@ mod tests {
     #[test]
     fn test_encodable_encoding_base36() {
         struct Test {
-            bytes: Rc<Vec<u8>>,
+            bytes: Arc<Vec<u8>>,
         }
 
-        impl TryFrom<Rc<Test>> for ByteVec {
+        impl TryFrom<Arc<Test>> for ByteVec {
             type Error = SerialiseError;
-            fn try_from(value: Rc<Test>) -> Result<Self, SerialiseError> {
-                Ok(Self::new(Rc::clone(&value.bytes)))
+            fn try_from(value: Arc<Test>) -> Result<Self, SerialiseError> {
+                Ok(Self::new(Arc::clone(&value.bytes)))
             }
         }
 
         impl Encodable for Test {}
 
-        let test = Rc::new(Test {
-            bytes: Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec()),
+        let test = Arc::new(Test {
+            bytes: Arc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec()),
         });
 
         let encoded = test.try_encode(Encoding::Base36);
@@ -147,20 +147,20 @@ mod tests {
     #[test]
     fn test_encodable_encoding_base58() {
         struct Test {
-            bytes: Rc<Vec<u8>>,
+            bytes: Arc<Vec<u8>>,
         }
 
-        impl TryFrom<Rc<Test>> for ByteVec {
+        impl TryFrom<Arc<Test>> for ByteVec {
             type Error = SerialiseError;
-            fn try_from(value: Rc<Test>) -> Result<Self, SerialiseError> {
+            fn try_from(value: Arc<Test>) -> Result<Self, SerialiseError> {
                 Ok(Self::new(value.bytes.clone()))
             }
         }
 
         impl Encodable for Test {}
 
-        let test = Rc::new(Test {
-            bytes: Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec()),
+        let test = Arc::new(Test {
+            bytes: Arc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec()),
         });
 
         let encoded = test.try_encode(Encoding::Base58);
@@ -176,20 +176,20 @@ mod tests {
     #[test]
     fn test_encodable_encoding_base64() {
         struct Test {
-            bytes: Rc<Vec<u8>>,
+            bytes: Arc<Vec<u8>>,
         }
 
-        impl TryFrom<Rc<Test>> for ByteVec {
+        impl TryFrom<Arc<Test>> for ByteVec {
             type Error = SerialiseError;
-            fn try_from(value: Rc<Test>) -> Result<Self, SerialiseError> {
+            fn try_from(value: Arc<Test>) -> Result<Self, SerialiseError> {
                 Ok(Self::new(value.bytes.clone()))
             }
         }
 
         impl Encodable for Test {}
 
-        let test = Rc::new(Test {
-            bytes: Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec()),
+        let test = Arc::new(Test {
+            bytes: Arc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec()),
         });
 
         let encoded = test.try_encode(Encoding::Base64);
@@ -205,20 +205,20 @@ mod tests {
     #[test]
     fn test_encodable_encoding_hex() {
         struct Test {
-            bytes: Rc<Vec<u8>>,
+            bytes: Arc<Vec<u8>>,
         }
 
-        impl TryFrom<Rc<Test>> for ByteVec {
+        impl TryFrom<Arc<Test>> for ByteVec {
             type Error = SerialiseError;
-            fn try_from(value: Rc<Test>) -> Result<Self, SerialiseError> {
+            fn try_from(value: Arc<Test>) -> Result<Self, SerialiseError> {
                 Ok(Self::new(value.bytes.clone()))
             }
         }
 
         impl Encodable for Test {}
 
-        let test = Rc::new(Test {
-            bytes: Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec()),
+        let test = Arc::new(Test {
+            bytes: Arc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec()),
         });
 
         let encoded = test.try_encode(Encoding::Hex);
@@ -234,20 +234,20 @@ mod tests {
     #[test]
     fn test_encodable_encoding_uuencode() {
         struct Test {
-            bytes: Rc<Vec<u8>>,
+            bytes: Arc<Vec<u8>>,
         }
 
-        impl TryFrom<Rc<Test>> for ByteVec {
+        impl TryFrom<Arc<Test>> for ByteVec {
             type Error = SerialiseError;
-            fn try_from(value: Rc<Test>) -> Result<Self, SerialiseError> {
+            fn try_from(value: Arc<Test>) -> Result<Self, SerialiseError> {
                 Ok(Self::new(value.bytes.clone()))
             }
         }
 
         impl Encodable for Test {}
 
-        let test = Rc::new(Test {
-            bytes: Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec()),
+        let test = Arc::new(Test {
+            bytes: Arc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec()),
         });
 
         let encoded = test.try_encode(Encoding::Uuencode);

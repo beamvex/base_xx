@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::{EncodedString, Encoder, Encoding, SerialiseError};
 
@@ -117,7 +117,7 @@ impl Base36 {
     /// Returns `Err` if `base36` contains characters outside the base36 alphabet.
     /// Returns `Err` if the decoded value requires more than `size` bytes when `size > 0`
     #[must_use = "This returns the decoded bytes and does nothing if unused"]
-    pub fn from_base36(base36: &str, size: usize) -> Result<Rc<Vec<u8>>, SerialiseError> {
+    pub fn from_base36(base36: &str, size: usize) -> Result<Arc<Vec<u8>>, SerialiseError> {
         match Self::base36_to_bytes(base36) {
             Err(e) => Err(e),
             Ok(mut bytes) => {
@@ -130,24 +130,24 @@ impl Base36 {
                 if bytes.len() < size && size > 0 {
                     let mut padded = vec![0u8; size - bytes.len()];
                     padded.append(&mut bytes);
-                    return Ok(Rc::new(padded));
+                    return Ok(Arc::new(padded));
                 }
 
-                Ok(Rc::new(bytes))
+                Ok(Arc::new(bytes))
             }
         }
     }
 }
 
 impl Encoder for Base36 {
-    fn try_encode(bytes: Rc<Vec<u8>>) -> Result<EncodedString, SerialiseError> {
+    fn try_encode(bytes: Arc<Vec<u8>>) -> Result<EncodedString, SerialiseError> {
         Ok(EncodedString::new(
             Encoding::Base36,
             Self::to_base36(&bytes),
         ))
     }
 
-    fn try_decode(encoded: &EncodedString) -> Result<Rc<Vec<u8>>, SerialiseError> {
+    fn try_decode(encoded: &EncodedString) -> Result<Arc<Vec<u8>>, SerialiseError> {
         Self::from_base36(encoded.get_string(), 0)
     }
 }
@@ -174,8 +174,8 @@ mod tests {
         let bytes = Base36::from_base36(string, 0);
         assert!(bytes.is_ok());
         assert_eq!(
-            bytes.unwrap_or_else(|_| Rc::new(NO_MATCH.to_vec())),
-            Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec())
+            bytes.unwrap_or_else(|_| Arc::new(NO_MATCH.to_vec())),
+            Arc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec())
         );
     }
 

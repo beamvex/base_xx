@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::{EncodedString, Encoder, Encoding, SerialiseError};
 
@@ -145,15 +145,15 @@ impl Base58 {
 }
 
 impl Encoder for Base58 {
-    fn try_encode(bytes: Rc<Vec<u8>>) -> Result<EncodedString, SerialiseError> {
+    fn try_encode(bytes: Arc<Vec<u8>>) -> Result<EncodedString, SerialiseError> {
         Ok(EncodedString::new(
             Encoding::Base58,
             Self::to_base58(&bytes),
         ))
     }
 
-    fn try_decode(encoded: &EncodedString) -> Result<Rc<Vec<u8>>, SerialiseError> {
-        Ok(Rc::new(Self::try_from_base58(encoded.get_string(), 0)?))
+    fn try_decode(encoded: &EncodedString) -> Result<Arc<Vec<u8>>, SerialiseError> {
+        Ok(Arc::new(Self::try_from_base58(encoded.get_string(), 0)?))
     }
 }
 

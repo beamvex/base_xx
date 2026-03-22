@@ -32,11 +32,11 @@ base_xx = "0.8.0"
 ### Basic Encoding
 
 ```rust
-use std::rc::Rc;
+use std::sync::Arc;
 
 use base_xx::{ByteVec, Encoding};
 
-let bytes = ByteVec::new(Rc::new(b"Hello, world!".to_vec()));
+let bytes = ByteVec::new(Arc::new(b"Hello, world!".to_vec()));
 let base36 = bytes.try_encode(Encoding::Base36)?;
 let base58 = bytes.try_encode(Encoding::Base58)?;
 let base64 = bytes.try_encode(Encoding::Base64)?;
@@ -53,7 +53,7 @@ println!("uuencode: {}", uuencode);
 ### Implementing for Custom Types
 
 ```rust
-use std::rc::Rc;
+use std::sync::Arc;
 
 use base_xx::{ByteVec, Encodable, Encoding, SerialiseError};
 
@@ -65,7 +65,7 @@ impl TryFrom<&MyType> for ByteVec {
     type Error = SerialiseError;
 
     fn try_from(value: &MyType) -> Result<Self, Self::Error> {
-        Ok(ByteVec::new(Rc::new(value.data.clone())))
+        Ok(ByteVec::new(Arc::new(value.data.clone())))
     }
 }
 
@@ -79,15 +79,15 @@ let encoded = my_data.try_encode(Encoding::Base36)?;
 ### Decoding
 
 ```rust
-use std::rc::Rc;
+use std::sync::Arc;
 
 use base_xx::{ByteVec, Decodable, EncodedString, Encoding, SerialiseError};
 
-// Implement TryFrom<Rc<ByteVec>> for your type
-impl TryFrom<Rc<ByteVec>> for MyType {
+// Implement TryFrom<Arc<ByteVec>> for your type
+impl TryFrom<Arc<ByteVec>> for MyType {
     type Error = SerialiseError;
 
-    fn try_from(value: Rc<ByteVec>) -> Result<Self, Self::Error> {
+    fn try_from(value: Arc<ByteVec>) -> Result<Self, Self::Error> {
         Ok(MyType {
             data: value.get_bytes().to_vec()
         })

@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::{
     Base36, ByteVec, Encoder, Encoding, SerialiseError,
@@ -51,29 +51,29 @@ impl EncodedString {
     /// # Errors
     /// Returns `Err` if the underlying decoding fails.
     #[must_use = "decoding returns a result that must be handled"]
-    fn try_decode(&self) -> Result<Rc<ByteVec>, SerialiseError>
+    fn try_decode(&self) -> Result<Arc<ByteVec>, SerialiseError>
     where
         Self: Sized,
     {
         match self.get_encoding() {
             Encoding::Base36 => match Base36::try_decode(self) {
-                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::clone(&bytes)))),
+                Ok(bytes) => Ok(Arc::new(ByteVec::new(Arc::clone(&bytes)))),
                 Err(e) => Err(SerialiseError::new(e.to_string())),
             },
             Encoding::Base58 => match Base58::try_decode(self) {
-                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::clone(&bytes)))),
+                Ok(bytes) => Ok(Arc::new(ByteVec::new(Arc::clone(&bytes)))),
                 Err(e) => Err(SerialiseError::new(e.to_string())),
             },
             Encoding::Base64 => match Base64::try_decode(self) {
-                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::clone(&bytes)))),
+                Ok(bytes) => Ok(Arc::new(ByteVec::new(Arc::clone(&bytes)))),
                 Err(e) => Err(SerialiseError::new(e.to_string())),
             },
             Encoding::Hex => match Hex::try_decode(self) {
-                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::clone(&bytes)))),
+                Ok(bytes) => Ok(Arc::new(ByteVec::new(Arc::clone(&bytes)))),
                 Err(e) => Err(SerialiseError::new(e.to_string())),
             },
             Encoding::Uuencode => match Uuencode::try_decode(self) {
-                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::clone(&bytes)))),
+                Ok(bytes) => Ok(Arc::new(ByteVec::new(Arc::clone(&bytes)))),
                 Err(e) => Err(SerialiseError::new(e.to_string())),
             },
         }
@@ -93,7 +93,7 @@ impl std::fmt::Display for EncodedString {
 ///
 pub trait Decodable
 where
-    Self: TryFrom<Rc<ByteVec>, Error = SerialiseError>,
+    Self: TryFrom<Arc<ByteVec>, Error = SerialiseError>,
 {
     /// Attempts to decode an encoded string into this type.
     ///
@@ -122,10 +122,10 @@ mod tests {
             value: Vec<u8>,
         }
 
-        impl TryFrom<Rc<ByteVec>> for TestType {
+        impl TryFrom<Arc<ByteVec>> for TestType {
             type Error = SerialiseError;
 
-            fn try_from(value: Rc<ByteVec>) -> Result<Self, Self::Error> {
+            fn try_from(value: Arc<ByteVec>) -> Result<Self, Self::Error> {
                 Ok(Self {
                     value: value.get_bytes().to_vec(),
                 })
@@ -153,10 +153,10 @@ mod tests {
             value: Vec<u8>,
         }
 
-        impl TryFrom<Rc<ByteVec>> for TestType {
+        impl TryFrom<Arc<ByteVec>> for TestType {
             type Error = SerialiseError;
 
-            fn try_from(value: Rc<ByteVec>) -> Result<Self, Self::Error> {
+            fn try_from(value: Arc<ByteVec>) -> Result<Self, Self::Error> {
                 Ok(Self {
                     value: value.get_bytes().to_vec(),
                 })
@@ -184,10 +184,10 @@ mod tests {
             value: Vec<u8>,
         }
 
-        impl TryFrom<Rc<ByteVec>> for TestType {
+        impl TryFrom<Arc<ByteVec>> for TestType {
             type Error = SerialiseError;
 
-            fn try_from(value: Rc<ByteVec>) -> Result<Self, Self::Error> {
+            fn try_from(value: Arc<ByteVec>) -> Result<Self, Self::Error> {
                 Ok(Self {
                     value: value.get_bytes().to_vec(),
                 })
@@ -215,10 +215,10 @@ mod tests {
             value: Vec<u8>,
         }
 
-        impl TryFrom<Rc<ByteVec>> for TestType {
+        impl TryFrom<Arc<ByteVec>> for TestType {
             type Error = SerialiseError;
 
-            fn try_from(value: Rc<ByteVec>) -> Result<Self, Self::Error> {
+            fn try_from(value: Arc<ByteVec>) -> Result<Self, Self::Error> {
                 Ok(Self {
                     value: value.get_bytes().to_vec(),
                 })
@@ -246,10 +246,10 @@ mod tests {
             value: Vec<u8>,
         }
 
-        impl TryFrom<Rc<ByteVec>> for TestType {
+        impl TryFrom<Arc<ByteVec>> for TestType {
             type Error = SerialiseError;
 
-            fn try_from(value: Rc<ByteVec>) -> Result<Self, Self::Error> {
+            fn try_from(value: Arc<ByteVec>) -> Result<Self, Self::Error> {
                 Ok(Self {
                     value: value.get_bytes().to_vec(),
                 })

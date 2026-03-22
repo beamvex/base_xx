@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::{EncodedString, Encoder, Encoding, SerialiseError};
 
@@ -69,15 +69,15 @@ impl Hex {
 }
 
 impl Encoder for Hex {
-    fn try_encode(bytes: Rc<Vec<u8>>) -> Result<EncodedString, SerialiseError> {
+    fn try_encode(bytes: Arc<Vec<u8>>) -> Result<EncodedString, SerialiseError> {
         Ok(EncodedString::new(
             Encoding::Hex,
             Self::try_to_hex(&bytes).unwrap_or_else(|_| String::new()),
         ))
     }
 
-    fn try_decode(encoded: &EncodedString) -> Result<Rc<Vec<u8>>, SerialiseError> {
-        Ok(Rc::new(Self::try_from_hex(encoded.get_string())?))
+    fn try_decode(encoded: &EncodedString) -> Result<Arc<Vec<u8>>, SerialiseError> {
+        Ok(Arc::new(Self::try_from_hex(encoded.get_string())?))
     }
 }
 
@@ -88,7 +88,7 @@ mod tests {
 
     #[test]
     fn test_to_hex() {
-        let bytes = Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec());
+        let bytes = Arc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec());
         let hex = Hex::try_to_hex(&bytes).unwrap_or_else(|_| String::new());
         assert_eq!(
             hex,
