@@ -57,23 +57,23 @@ impl EncodedString {
     {
         match self.get_encoding() {
             Encoding::Base36 => match Base36::try_decode(self) {
-                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::new(bytes)))),
+                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::clone(&bytes)))),
                 Err(e) => Err(SerialiseError::new(e.to_string())),
             },
             Encoding::Base58 => match Base58::try_decode(self) {
-                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::new(bytes)))),
+                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::clone(&bytes)))),
                 Err(e) => Err(SerialiseError::new(e.to_string())),
             },
             Encoding::Base64 => match Base64::try_decode(self) {
-                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::new(bytes)))),
+                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::clone(&bytes)))),
                 Err(e) => Err(SerialiseError::new(e.to_string())),
             },
             Encoding::Hex => match Hex::try_decode(self) {
-                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::new(bytes)))),
+                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::clone(&bytes)))),
                 Err(e) => Err(SerialiseError::new(e.to_string())),
             },
             Encoding::Uuencode => match Uuencode::try_decode(self) {
-                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::new(bytes)))),
+                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::clone(&bytes)))),
                 Err(e) => Err(SerialiseError::new(e.to_string())),
             },
         }

@@ -45,23 +45,23 @@ impl ByteVec {
     #[must_use = "The result of this function is a `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs."]
     pub fn try_encode(&self, encoding: Encoding) -> Result<EncodedString, SerialiseError> {
         match encoding {
-            Encoding::Base36 => match Base36::try_encode(self.bytes.as_slice()) {
+            Encoding::Base36 => match Base36::try_encode(Rc::clone(&self.bytes)) {
                 Ok(encoded) => Ok(encoded),
                 Err(error) => Err(error),
             },
-            Encoding::Base58 => match Base58::try_encode(self.bytes.as_slice()) {
+            Encoding::Base58 => match Base58::try_encode(Rc::clone(&self.bytes)) {
                 Ok(encoded) => Ok(encoded),
                 Err(error) => Err(error),
             },
-            Encoding::Base64 => match Base64::try_encode(self.bytes.as_slice()) {
+            Encoding::Base64 => match Base64::try_encode(Rc::clone(&self.bytes)) {
                 Ok(encoded) => Ok(encoded),
                 Err(error) => Err(error),
             },
-            Encoding::Hex => match Hex::try_encode(self.bytes.as_slice()) {
+            Encoding::Hex => match Hex::try_encode(Rc::clone(&self.bytes)) {
                 Ok(encoded) => Ok(encoded),
                 Err(error) => Err(error),
             },
-            Encoding::Uuencode => match Uuencode::try_encode(self.bytes.as_slice()) {
+            Encoding::Uuencode => match Uuencode::try_encode(Rc::clone(&self.bytes)) {
                 Ok(encoded) => Ok(encoded),
                 Err(error) => Err(error),
             },
