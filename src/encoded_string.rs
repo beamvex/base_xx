@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{
     Base36, ByteVec, Encoder, Encoding, SerialiseError,
     algorithm::{Base58, Base64, Hex, Uuencode},
@@ -44,40 +46,38 @@ impl EncodedString {
         &self.string
     }
 
-    /*
     /// Attempts to decode an encoded string into this type.
     ///
     /// # Errors
     /// Returns `Err` if the underlying decoding fails.
     #[must_use = "decoding returns a result that must be handled"]
-    fn try_decode(self) -> Result<ByteVec, SerialiseError>
+    fn try_decode(&self) -> Result<Rc<ByteVec>, SerialiseError>
     where
         Self: Sized,
     {
         match self.get_encoding() {
-            Encoding::Base36 => match Base36::try_decode(&self) {
-                Ok(bytes) => Ok(ByteVec::new(bytes)),
+            Encoding::Base36 => match Base36::try_decode(self) {
+                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::new(bytes)))),
                 Err(e) => Err(SerialiseError::new(e.to_string())),
             },
-            Encoding::Base58 => match Base58::try_decode(&self) {
-                Ok(bytes) => Ok(ByteVec::new(bytes)),
+            Encoding::Base58 => match Base58::try_decode(self) {
+                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::new(bytes)))),
                 Err(e) => Err(SerialiseError::new(e.to_string())),
             },
-            Encoding::Base64 => match Base64::try_decode(&self) {
-                Ok(bytes) => Ok(ByteVec::new(bytes)),
+            Encoding::Base64 => match Base64::try_decode(self) {
+                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::new(bytes)))),
                 Err(e) => Err(SerialiseError::new(e.to_string())),
             },
-            Encoding::Hex => match Hex::try_decode(&self) {
-                Ok(bytes) => Ok(ByteVec::new(bytes)),
+            Encoding::Hex => match Hex::try_decode(self) {
+                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::new(bytes)))),
                 Err(e) => Err(SerialiseError::new(e.to_string())),
             },
-            Encoding::Uuencode => match Uuencode::try_decode(&self) {
-                Ok(bytes) => Ok(ByteVec::new(bytes)),
+            Encoding::Uuencode => match Uuencode::try_decode(self) {
+                Ok(bytes) => Ok(Rc::new(ByteVec::new(Rc::new(bytes)))),
                 Err(e) => Err(SerialiseError::new(e.to_string())),
             },
         }
     }
-    */
 }
 
 impl std::fmt::Display for EncodedString {
@@ -85,7 +85,6 @@ impl std::fmt::Display for EncodedString {
         write!(f, "{}", self.string)
     }
 }
-/*
 
 /// Implements decoding helpers for a type that can be constructed from decoded bytes.
 ///
@@ -94,7 +93,7 @@ impl std::fmt::Display for EncodedString {
 ///
 pub trait Decodable
 where
-    Self: TryFrom<ByteVec, Error = SerialiseError>,
+    Self: TryFrom<Rc<ByteVec>, Error = SerialiseError>,
 {
     /// Attempts to decode an encoded string into this type.
     ///
@@ -105,13 +104,14 @@ where
     where
         Self: Sized,
     {
-        match encoded_string.try_decode() {
+        match EncodedString::try_decode(&encoded_string) {
             Ok(byte_vec) => Self::try_from(byte_vec),
             Err(e) => Err(e),
         }
     }
 }
 
+/*
 #[cfg(test)]
 mod tests {
     use super::*;
