@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{EncodedString, Encoder, Encoding, SerialiseError};
 
 const ALPHABET: &[u8; 36] = b"0123456789abcdefghijklmnopqrstuvwxyz";
@@ -19,7 +21,7 @@ impl Base36 {
     /// The base36-encoded string
     #[must_use = "This returns the encoded string and does nothing if unused"]
     #[allow(clippy::missing_panics_doc)]
-    pub fn to_base36(bytes: &[u8]) -> String {
+    pub fn to_base36(bytes: Rc<Vec<u8>>) -> String {
         if bytes.is_empty() || bytes.iter().all(|&b| b == 0) {
             return "0".to_string();
         }
@@ -115,7 +117,7 @@ impl Base36 {
     /// Returns `Err` if `base36` contains characters outside the base36 alphabet.
     /// Returns `Err` if the decoded value requires more than `size` bytes when `size > 0`
     #[must_use = "This returns the decoded bytes and does nothing if unused"]
-    pub fn from_base36(base36: &str, size: usize) -> Result<Vec<u8>, SerialiseError> {
+    pub fn from_base36(base36: &str, size: usize) -> Result<Rc<Vec<u8>>, SerialiseError> {
         match Self::base36_to_bytes(base36) {
             Err(e) => Err(e),
             Ok(mut bytes) => {
@@ -138,12 +140,12 @@ impl Base36 {
 }
 
 impl Encoder for Base36 {
-    fn try_encode(bytes: &[u8]) -> Result<EncodedString, SerialiseError> {
+    fn try_encode(bytes: Rc<Vec<u8>>) -> Result<EncodedString, SerialiseError> {
         Ok(EncodedString::new(Encoding::Base36, Self::to_base36(bytes)))
     }
 
-    fn try_decode(encoded: &EncodedString) -> Result<Vec<u8>, SerialiseError> {
-        Self::from_base36(encoded.get_string(), 0)
+    fn try_decode(encoded: &EncodedString) -> Result<Rc<Vec<u8>>, SerialiseError> {
+        Ok(Self::from_base36(encoded.get_string(), 0)?)
     }
 }
 
