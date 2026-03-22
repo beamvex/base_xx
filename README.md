@@ -24,7 +24,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-base_xx = "0.7.1"
+base_xx = "0.8.0"
 ```
 
 ## Usage
@@ -32,13 +32,15 @@ base_xx = "0.7.1"
 ### Basic Encoding
 
 ```rust
+use std::rc::Rc;
+
 use base_xx::{ByteVec, Encoding};
 
-let bytes = ByteVec::new(b"Hello, world!".to_vec());
-let base36 = bytes.clone().try_encode(Encoding::Base36)?;
+let bytes = ByteVec::new(Rc::new(b"Hello, world!".to_vec()));
+let base36 = bytes.try_encode(Encoding::Base36)?;
 let base58 = bytes.try_encode(Encoding::Base58)?;
-let base64 = bytes.clone().try_encode(Encoding::Base64)?;
-let hex = bytes.clone().try_encode(Encoding::Hex)?;
+let base64 = bytes.try_encode(Encoding::Base64)?;
+let hex = bytes.try_encode(Encoding::Hex)?;
 let uuencode = bytes.try_encode(Encoding::Uuencode)?;
 
 println!("Base36: {}", base36);
@@ -51,6 +53,8 @@ println!("uuencode: {}", uuencode);
 ### Implementing for Custom Types
 
 ```rust
+use std::rc::Rc;
+
 use base_xx::{ByteVec, Encodable, Encoding, SerialiseError};
 
 struct MyType {
@@ -61,7 +65,7 @@ impl TryFrom<&MyType> for ByteVec {
     type Error = SerialiseError;
 
     fn try_from(value: &MyType) -> Result<Self, Self::Error> {
-        Ok(ByteVec::new(value.data.clone()))
+        Ok(ByteVec::new(Rc::new(value.data.clone())))
     }
 }
 
@@ -75,13 +79,15 @@ let encoded = my_data.try_encode(Encoding::Base36)?;
 ### Decoding
 
 ```rust
+use std::rc::Rc;
+
 use base_xx::{ByteVec, Decodable, EncodedString, Encoding, SerialiseError};
 
-// Implement TryFrom<ByteVec> for your type
-impl TryFrom<ByteVec> for MyType {
+// Implement TryFrom<Rc<ByteVec>> for your type
+impl TryFrom<Rc<ByteVec>> for MyType {
     type Error = SerialiseError;
 
-    fn try_from(value: ByteVec) -> Result<Self, Self::Error> {
+    fn try_from(value: Rc<ByteVec>) -> Result<Self, Self::Error> {
         Ok(MyType {
             data: value.get_bytes().to_vec()
         })
