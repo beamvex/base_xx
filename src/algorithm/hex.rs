@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{EncodedString, Encoder, Encoding, SerialiseError};
 
 const ALPHABET: &[u8; 16] = b"0123456789abcdef";
@@ -67,15 +69,15 @@ impl Hex {
 }
 
 impl Encoder for Hex {
-    fn try_encode(bytes: &[u8]) -> Result<EncodedString, SerialiseError> {
+    fn try_encode(bytes: Rc<Vec<u8>>) -> Result<EncodedString, SerialiseError> {
         Ok(EncodedString::new(
             Encoding::Hex,
-            Self::try_to_hex(bytes).unwrap_or_else(|_| String::new()),
+            Self::try_to_hex(&bytes).unwrap_or_else(|_| String::new()),
         ))
     }
 
-    fn try_decode(encoded: &EncodedString) -> Result<Vec<u8>, SerialiseError> {
-        Self::try_from_hex(encoded.get_string())
+    fn try_decode(encoded: &EncodedString) -> Result<Rc<Vec<u8>>, SerialiseError> {
+        Ok(Rc::new(Self::try_from_hex(encoded.get_string())?))
     }
 }
 
@@ -86,8 +88,8 @@ mod tests {
 
     #[test]
     fn test_to_hex() {
-        let bytes = b"0123456789abcdefghijklmnopqrstuvwxyz";
-        let hex = Hex::try_to_hex(bytes).unwrap_or_else(|_| String::new());
+        let bytes = Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec());
+        let hex = Hex::try_to_hex(&bytes).unwrap_or_else(|_| String::new());
         assert_eq!(
             hex,
             "303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a"

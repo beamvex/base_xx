@@ -21,7 +21,7 @@ impl Base36 {
     /// The base36-encoded string
     #[must_use = "This returns the encoded string and does nothing if unused"]
     #[allow(clippy::missing_panics_doc)]
-    pub fn to_base36(bytes: Rc<Vec<u8>>) -> String {
+    pub fn to_base36(bytes: &[u8]) -> String {
         if bytes.is_empty() || bytes.iter().all(|&b| b == 0) {
             return "0".to_string();
         }
@@ -130,10 +130,10 @@ impl Base36 {
                 if bytes.len() < size && size > 0 {
                     let mut padded = vec![0u8; size - bytes.len()];
                     padded.append(&mut bytes);
-                    return Ok(padded);
+                    return Ok(Rc::new(padded));
                 }
 
-                Ok(bytes)
+                Ok(Rc::new(bytes))
             }
         }
     }
@@ -141,11 +141,14 @@ impl Base36 {
 
 impl Encoder for Base36 {
     fn try_encode(bytes: Rc<Vec<u8>>) -> Result<EncodedString, SerialiseError> {
-        Ok(EncodedString::new(Encoding::Base36, Self::to_base36(bytes)))
+        Ok(EncodedString::new(
+            Encoding::Base36,
+            Self::to_base36(&bytes),
+        ))
     }
 
     fn try_decode(encoded: &EncodedString) -> Result<Rc<Vec<u8>>, SerialiseError> {
-        Ok(Self::from_base36(encoded.get_string(), 0)?)
+        Self::from_base36(encoded.get_string(), 0)
     }
 }
 
@@ -171,8 +174,8 @@ mod tests {
         let bytes = Base36::from_base36(string, 0);
         assert!(bytes.is_ok());
         assert_eq!(
-            bytes.unwrap_or_else(|_| NO_MATCH.to_vec()),
-            b"0123456789abcdefghijklmnopqrstuvwxyz"
+            bytes.unwrap_or_else(|_| Rc::new(NO_MATCH.to_vec())),
+            Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec())
         );
     }
 

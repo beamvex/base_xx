@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{EncodedString, Encoder, Encoding, SerialiseError};
 
 /// `uuencode` implementation.
@@ -134,15 +136,15 @@ impl Uuencode {
 }
 
 impl Encoder for Uuencode {
-    fn try_encode(bytes: &[u8]) -> Result<EncodedString, SerialiseError> {
+    fn try_encode(bytes: Rc<Vec<u8>>) -> Result<EncodedString, SerialiseError> {
         Ok(EncodedString::new(
             Encoding::Uuencode,
-            Self::to_uuencode(bytes),
+            Self::to_uuencode(&bytes),
         ))
     }
 
-    fn try_decode(encoded: &EncodedString) -> Result<Vec<u8>, SerialiseError> {
-        Self::from_uuencode(encoded.get_string())
+    fn try_decode(encoded: &EncodedString) -> Result<Rc<Vec<u8>>, SerialiseError> {
+        Ok(Rc::new(Self::from_uuencode(encoded.get_string())?))
     }
 }
 
@@ -153,8 +155,8 @@ mod tests {
 
     #[test]
     fn test_to_uuencode() {
-        let bytes = b"0123456789abcdefghijklmnopqrstuvwxyz";
-        let uuencode = Uuencode::to_uuencode(bytes);
+        let bytes = Rc::new(b"0123456789abcdefghijklmnopqrstuvwxyz".to_vec());
+        let uuencode = Uuencode::to_uuencode(&bytes);
         assert_eq!(
             uuencode,
             "D,#$R,S0U-C<X.6%B8V1E9F=H:6IK;&UN;W!Q<G-T=79W>'EZ\n`\n"

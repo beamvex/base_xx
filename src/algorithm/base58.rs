@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{EncodedString, Encoder, Encoding, SerialiseError};
 
 const ALPHABET: &[u8; 58] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -143,12 +145,15 @@ impl Base58 {
 }
 
 impl Encoder for Base58 {
-    fn try_encode(bytes: &[u8]) -> Result<EncodedString, SerialiseError> {
-        Ok(EncodedString::new(Encoding::Base58, Self::to_base58(bytes)))
+    fn try_encode(bytes: Rc<Vec<u8>>) -> Result<EncodedString, SerialiseError> {
+        Ok(EncodedString::new(
+            Encoding::Base58,
+            Self::to_base58(&bytes),
+        ))
     }
 
-    fn try_decode(encoded: &EncodedString) -> Result<Vec<u8>, SerialiseError> {
-        Self::try_from_base58(encoded.get_string(), 0)
+    fn try_decode(encoded: &EncodedString) -> Result<Rc<Vec<u8>>, SerialiseError> {
+        Ok(Rc::new(Self::try_from_base58(encoded.get_string(), 0)?))
     }
 }
 
