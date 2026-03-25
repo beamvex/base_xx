@@ -82,6 +82,36 @@ impl Debug for ByteVec {
     }
 }
 
+/// Trait for converting from a `ByteVec` to a type.
+pub trait TryFromByteVec: Sized {
+    /// Converts a `ByteVec` to Self.
+    ///
+    /// # Parameters
+    /// * `byte_vec` - The `ByteVec` to convert.
+    ///
+    /// # Returns
+    /// A `Result` containing Self if successful, or a `SerialiseError` if an error occurs.
+    ///
+    /// # Errors
+    /// * `SerialiseError` - If the conversion fails.
+    fn try_from_byte_vec(byte_vec: Arc<ByteVec>) -> Result<Self, SerialiseError>;
+}
+
+/// Trait for converting to a `ByteVec` from a type.
+pub trait TryIntoByteVec: Sized {
+    /// Converts Self to a `ByteVec`.
+    ///
+    /// # Parameters
+    /// * `self` - The value to convert.
+    ///
+    /// # Returns
+    /// A `Result` containing `Arc<ByteVec>` if successful, or a `SerialiseError` if an error occurs.
+    ///
+    /// # Errors
+    /// * `SerialiseError` - If the conversion fails.
+    fn try_into_byte_vec(value: Arc<Self>) -> Result<Arc<ByteVec>, SerialiseError>;
+}
+
 /// Implements encoding functionality for a type that can be converted to bytes.
 ///
 /// This trait generates implementation for encoding methods that allow converting
@@ -89,7 +119,7 @@ impl Debug for ByteVec {
 ///
 pub trait Encodable
 where
-    ByteVec: TryFrom<Arc<Self>, Error = SerialiseError>,
+    Self: TryIntoByteVec,
 {
     /// Encodes this type using the specified `Encoding`.
     ///
@@ -104,7 +134,7 @@ where
     /// * `SerialiseError` - If the specified encoding is unsupported or an error occurs during serialisation.
     #[must_use = "The result of this function is a `Result` containing the encoded string if successful, or a `SerialiseError` if an error occurs."]
     fn try_encode(self: Arc<Self>, encoding: Encoding) -> Result<EncodedString, SerialiseError> {
-        match ByteVec::try_from(self) {
+        match Self::try_into_byte_vec(self) {
             Ok(bytes) => bytes.try_encode(encoding),
             Err(error) => Err(error),
         }
@@ -125,6 +155,12 @@ mod tests {
             type Error = SerialiseError;
             fn try_from(value: Arc<Test>) -> Result<Self, SerialiseError> {
                 Ok(Self::new(Arc::clone(&value.bytes)))
+            }
+        }
+
+        impl TryIntoByteVec for Test {
+            fn try_into_byte_vec(value: Arc<Self>) -> Result<Arc<ByteVec>, SerialiseError> {
+                Ok(Arc::new(ByteVec::new(Arc::clone(&value.bytes))))
             }
         }
 
@@ -157,6 +193,12 @@ mod tests {
             }
         }
 
+        impl TryIntoByteVec for Test {
+            fn try_into_byte_vec(value: Arc<Self>) -> Result<Arc<ByteVec>, SerialiseError> {
+                Ok(Arc::new(ByteVec::new(Arc::clone(&value.bytes))))
+            }
+        }
+
         impl Encodable for Test {}
 
         let test = Arc::new(Test {
@@ -183,6 +225,12 @@ mod tests {
             type Error = SerialiseError;
             fn try_from(value: Arc<Test>) -> Result<Self, SerialiseError> {
                 Ok(Self::new(value.bytes.clone()))
+            }
+        }
+
+        impl TryIntoByteVec for Test {
+            fn try_into_byte_vec(value: Arc<Self>) -> Result<Arc<ByteVec>, SerialiseError> {
+                Ok(Arc::new(ByteVec::new(Arc::clone(&value.bytes))))
             }
         }
 
@@ -215,6 +263,12 @@ mod tests {
             }
         }
 
+        impl TryIntoByteVec for Test {
+            fn try_into_byte_vec(value: Arc<Self>) -> Result<Arc<ByteVec>, SerialiseError> {
+                Ok(Arc::new(ByteVec::new(Arc::clone(&value.bytes))))
+            }
+        }
+
         impl Encodable for Test {}
 
         let test = Arc::new(Test {
@@ -241,6 +295,12 @@ mod tests {
             type Error = SerialiseError;
             fn try_from(value: Arc<Test>) -> Result<Self, SerialiseError> {
                 Ok(Self::new(value.bytes.clone()))
+            }
+        }
+
+        impl TryIntoByteVec for Test {
+            fn try_into_byte_vec(value: Arc<Self>) -> Result<Arc<ByteVec>, SerialiseError> {
+                Ok(Arc::new(ByteVec::new(Arc::clone(&value.bytes))))
             }
         }
 
